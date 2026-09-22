@@ -1,4 +1,4 @@
-Sprint Log 
+Tyler Brochu Sprint Log 
 
 Sprint 1 
     Boss NPC + Cutaway Screen
