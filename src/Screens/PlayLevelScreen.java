@@ -8,6 +8,8 @@ import Level.*;
 import Maps.TestMap;
 import Players.Cat;
 import Utils.Direction;
+import java.util.Random;
+import Utils.Point;
 
 // This class is for when the RPG game is actually being played
 public class PlayLevelScreen extends Screen implements GameListener {
@@ -17,6 +19,10 @@ public class PlayLevelScreen extends Screen implements GameListener {
     protected PlayLevelScreenState playLevelScreenState;
     protected WinScreen winScreen;
     protected FlagManager flagManager;
+    protected EncounterScreen encounterScreen;
+    protected String[] monsterNameStrings;
+    protected java.util.Random random;
+    protected Utils.Point lastTile;
 
     public PlayLevelScreen(ScreenCoordinator screenCoordinator) {
         this.screenCoordinator = screenCoordinator;
@@ -54,6 +60,10 @@ public class PlayLevelScreen extends Screen implements GameListener {
         map.preloadScripts();
 
         winScreen = new WinScreen(this);
+        encounterScreen = new EncounterScreen(this);
+        lastTile = map.getTileIndexByPosition(player.getX(), player.getY());
+        random = new Random();
+        monsterNameStrings = new String[] {"Monster x", "Monster y", "Monster z"};
     }
 
     public void update() {
@@ -63,12 +73,16 @@ public class PlayLevelScreen extends Screen implements GameListener {
             case RUNNING:
                 player.update();
                 map.update(player);
+                encounterChance();
                 break;
             // if level has been completed, bring up level cleared screen
             case LEVEL_COMPLETED:
                 winScreen.update();
                 break;
-        }
+            case ENCOUNTER:
+                encounterScreen.update();
+                break;
+            }
     }
 
     @Override
@@ -86,6 +100,9 @@ public class PlayLevelScreen extends Screen implements GameListener {
             case LEVEL_COMPLETED:
                 winScreen.draw(graphicsHandler);
                 break;
+            case ENCOUNTER:
+                encounterScreen.draw(graphicsHandler);
+            break;
         }
     }
 
@@ -103,6 +120,21 @@ public class PlayLevelScreen extends Screen implements GameListener {
 
     // This enum represents the different states this screen can be in
     private enum PlayLevelScreenState {
-        RUNNING, LEVEL_COMPLETED
+        RUNNING, LEVEL_COMPLETED, ENCOUNTER
+    }
+
+    public void returnFromEncounter(){
+        playLevelScreenState = PlayLevelScreenState.RUNNING;
+    }
+    public void encounterChance(){
+        //essentially this chunk checks if the spot the player is now is different from the last time lastTile was saved
+        Point currentTile = map.getTileIndexByPosition(player.getX(), player.getY());
+        if (currentTile.x != lastTile.x || currentTile.y != lastTile.y) {
+            if(random.nextFloat() <= 0.1f){
+                encounterScreen.setMonsterName(monsterNameStrings[random.nextInt(monsterNameStrings.length)]);
+                playLevelScreenState = PlayLevelScreenState.ENCOUNTER;
+            }
+        lastTile = map.getTileIndexByPosition(player.getX(), player.getY());
+        }
     }
 }
