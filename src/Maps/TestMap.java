@@ -2,6 +2,7 @@ package Maps;
 
 import EnhancedMapTiles.PushableRock;
 import Level.*;
+import NPCs.Boss1;
 import NPCs.Bug;
 import NPCs.Dinosaur;
 import NPCs.Walrus;
@@ -46,6 +47,10 @@ public class TestMap extends Map {
         bug.setInteractScript(new BugScript());
         npcs.add(bug);
 
+        Boss1 boss1 = new Boss1(4, getMapTile(18, 6).getLocation());
+        boss1.setInteractScript(new Boss1Script());
+        npcs.add(boss1);
+
         return npcs;
     }
 
@@ -69,4 +74,3 @@ public class TestMap extends Map {
         getMapTile(2, 6).setInteractScript(new TreeScript());
     }
 }
-
