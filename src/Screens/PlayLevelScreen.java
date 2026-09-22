@@ -18,6 +18,7 @@ public class PlayLevelScreen extends Screen implements GameListener {
     protected Player player;
     protected PlayLevelScreenState playLevelScreenState;
     protected WinScreen winScreen;
+    protected CutawayScreen cutawayScreen;
     protected FlagManager flagManager;
     protected EncounterScreen encounterScreen;
     protected String[] monsterNameStrings;
@@ -64,6 +65,7 @@ public class PlayLevelScreen extends Screen implements GameListener {
         lastTile = map.getTileIndexByPosition(player.getX(), player.getY());
         random = new Random();
         monsterNameStrings = new String[] {"Monster x", "Monster y", "Monster z"};
+        cutawayScreen = new CutawayScreen(this);
     }
 
     public void update() {
@@ -83,12 +85,23 @@ public class PlayLevelScreen extends Screen implements GameListener {
                 encounterScreen.update();
                 break;
             }
+            // if a fight has been triggered, bring up the cutaway screen
+            case CUTAWAY:
+                cutawayScreen.update();
+                break;
+        }
     }
 
     @Override
     public void onWin() {
         // when this method is called within the game, it signals the game has been "won"
         playLevelScreenState = PlayLevelScreenState.LEVEL_COMPLETED;
+    }
+
+    @Override
+    public void onFight() {
+        // when this method is called within the game, it signals that a boss fight has been triggered
+        playLevelScreenState = PlayLevelScreenState.CUTAWAY;
     }
 
     public void draw(GraphicsHandler graphicsHandler) {
@@ -103,6 +116,9 @@ public class PlayLevelScreen extends Screen implements GameListener {
             case ENCOUNTER:
                 encounterScreen.draw(graphicsHandler);
             break;
+            case CUTAWAY:
+                cutawayScreen.draw(graphicsHandler);
+                break;
         }
     }
 
@@ -118,9 +134,14 @@ public class PlayLevelScreen extends Screen implements GameListener {
         screenCoordinator.setGameState(GameState.MENU);
     }
 
+    public void endCutaway() {
+        // returns control back to the map/player once the cutaway screen is dismissed
+        playLevelScreenState = PlayLevelScreenState.RUNNING;
+    }
+
     // This enum represents the different states this screen can be in
     private enum PlayLevelScreenState {
-        RUNNING, LEVEL_COMPLETED, ENCOUNTER
+        RUNNING, LEVEL_COMPLETED, ENCOUNTER, CUTAWAY
     }
 
     public void returnFromEncounter(){
