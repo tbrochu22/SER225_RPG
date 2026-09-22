@@ -10,12 +10,12 @@ import Level.Player;
 
 import java.util.HashMap;
 
-// This is the class for the Cat player character
+// This is the class for the Knight player character
 // basically just sets some values for physics and then defines animations
-public class Cat extends Player {
+public class Knight extends Player {
 
-    public Cat(float x, float y) {
-        super(new SpriteSheet(ImageLoader.load("Cat.png"), 24, 24), x, y, "STAND_RIGHT");
+    public Knight(float x, float y) {
+        super(new SpriteSheet(ImageLoader.load("KnightSheet.png"), 24, 24), x, y, "STAND_RIGHT");
         walkSpeed = 2.3f;
     }
 
