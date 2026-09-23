@@ -2,12 +2,14 @@ package Game;
 
 import Engine.GameWindow;
 import Engine.ScreenManager;
+import Music.MusicPlayer;
 
 /*
  * The game starts here
- * This class just starts up a GameWindow and attaches the ScreenCoordinator to the ScreenManager instance in the GameWindow
- * From this point on the ScreenCoordinator class will dictate what the game does
+ * This class starts the GameWindow, sets the first screen,
+ * and starts the background music.
  */
+
 public class Game {
 
     public static void main(String[] args) {
@@ -18,6 +20,10 @@ public class Game {
         GameWindow gameWindow = new GameWindow();
         ScreenManager screenManager = gameWindow.getScreenManager();
         screenManager.setCurrentScreen(new ScreenCoordinator());
+        MusicPlayer music = new MusicPlayer();
+        String musicPath = "src/music/initial_d___deja_vu.wav";
+        // Start music
+        music.playMusic(musicPath);
         gameWindow.startGame();
     }
 }
