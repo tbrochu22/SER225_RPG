@@ -24,7 +24,7 @@ public class Boss1Script extends Script {
 
         scriptActions.add(new TextboxScriptAction() {{
             addText("You dare enter my domain?");
-            addText("I've squashed heroes far braver than you, little cat.");
+            addText("I've squashed heroes far braver than you");
             addText("Let's see if you can survive this...");
         }});
 
