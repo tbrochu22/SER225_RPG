@@ -9,7 +9,7 @@ import Music.MusicPlayer;
  * This class starts the GameWindow, sets the first screen,
  * and starts the background music.
  */
-
+// Added comment
 public class Game {
 
     public static void main(String[] args) {
