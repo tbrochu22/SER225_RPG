@@ -1,5 +1,6 @@
 package Maps;
 
+import EnhancedMapTiles.Flower;
 import EnhancedMapTiles.PushableRock;
 import Level.*;
 import NPCs.Boss1;
@@ -9,7 +10,6 @@ import NPCs.Walrus;
 import Scripts.SimpleTextScript;
 import Scripts.TestMap.*;
 import Tilesets.CommonTileset;
-
 import java.util.ArrayList;
 
 // Represents a test map to be used in a level
@@ -23,12 +23,13 @@ public class TestMap extends Map {
     @Override
     public ArrayList<EnhancedMapTile> loadEnhancedMapTiles() {
         ArrayList<EnhancedMapTile> enhancedMapTiles = new ArrayList<>();
-
         PushableRock pushableRock = new PushableRock(getMapTile(2, 7).getLocation());
         enhancedMapTiles.add(pushableRock);
-
+        Flower flower = new Flower(getMapTile(10, 10).getLocation());
+        enhancedMapTiles.add(flower);
         return enhancedMapTiles;
     }
+
 
     @Override
     public ArrayList<NPC> loadNPCs() {
