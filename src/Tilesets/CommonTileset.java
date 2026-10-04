@@ -212,77 +212,74 @@ public class CommonTileset extends Tileset {
         mapTiles.add(bushTile);
 
         // house body
-        Frame houseBodyFrame = new FrameBuilder(getSubImage(3, 4))
+        // turned to grass
+        Frame houseBodyFrame = new FrameBuilder(getSubImage(0, 0))
                 .withScale(tileScale)
                 .build();
 
-        MapTileBuilder houseBodyTile = new MapTileBuilder(houseBodyFrame)
-                .withTileType(TileType.NOT_PASSABLE);
+        MapTileBuilder houseBodyTile = new MapTileBuilder(houseBodyFrame);
 
         mapTiles.add(houseBodyTile);
 
         // house roof body
-        Frame houseRoofBodyFrame = new FrameBuilder(getSubImage(4, 0))
+        // turned to grass
+        Frame houseRoofBodyFrame = new FrameBuilder(getSubImage(0, 0))
                 .withScale(tileScale)
                 .build();
 
-        MapTileBuilder houseRoofBodyTile = new MapTileBuilder(grassFrame)
-                .withTopLayer(houseRoofBodyFrame)
-                .withTileType(TileType.PASSABLE);
+        MapTileBuilder houseRoofBodyTile = new MapTileBuilder(grassFrame);
 
         mapTiles.add(houseRoofBodyTile);
 
-        // left house roof
-        Frame leftHouseRoofFrame = new FrameBuilder(getSubImage(4, 1))
+        // left house roof        
+        // // turned to grass
+        Frame leftHouseRoofFrame = new FrameBuilder(getSubImage(0, 0))
                 .withScale(tileScale)
                 .build();
 
-        MapTileBuilder leftHouseRoofTile = new MapTileBuilder(grassFrame)
-                .withTopLayer(leftHouseRoofFrame)
-                .withTileType(TileType.PASSABLE);
+        MapTileBuilder leftHouseRoofTile = new MapTileBuilder(grassFrame);
 
         mapTiles.add(leftHouseRoofTile);
 
-        // right house roof
-        Frame rightHouseRoofFrame = new FrameBuilder(getSubImage(4, 1))
+        // right house roof        
+        // turned to grass
+        Frame rightHouseRoofFrame = new FrameBuilder(getSubImage(0, 0))
                 .withScale(tileScale)
                 .withImageEffect(ImageEffect.FLIP_HORIZONTAL)
                 .build();
 
-        MapTileBuilder rightHouseRoofTile = new MapTileBuilder(grassFrame)
-                .withTopLayer(rightHouseRoofFrame)
-                .withTileType(TileType.PASSABLE);
+        MapTileBuilder rightHouseRoofTile = new MapTileBuilder(grassFrame);
 
         mapTiles.add(rightHouseRoofTile);
 
         // left window
-        Frame leftWindowFrame = new FrameBuilder(getSubImage(4, 2))
+        // turned to grass
+        Frame leftWindowFrame = new FrameBuilder(getSubImage(0, 0))
                 .withScale(tileScale)
                 .build();
 
-        MapTileBuilder leftWindowTile = new MapTileBuilder(leftWindowFrame)
-                .withTileType(TileType.NOT_PASSABLE);
+        MapTileBuilder leftWindowTile = new MapTileBuilder(leftWindowFrame);
 
         mapTiles.add(leftWindowTile);
 
         // right window
-        Frame rightWindowFrame = new FrameBuilder(getSubImage(4, 2))
+        // turned to grass
+        Frame rightWindowFrame = new FrameBuilder(getSubImage(0, 0))
                 .withScale(tileScale)
                 .withImageEffect(ImageEffect.FLIP_HORIZONTAL)
                 .build();
 
-        MapTileBuilder rightWindowTile = new MapTileBuilder(rightWindowFrame)
-                .withTileType(TileType.NOT_PASSABLE);
+        MapTileBuilder rightWindowTile = new MapTileBuilder(rightWindowFrame);
 
         mapTiles.add(rightWindowTile);
 
         // door
-        Frame doorFrame = new FrameBuilder(getSubImage(4, 3))
+        // turned to grass
+        Frame doorFrame = new FrameBuilder(getSubImage(0, 0))
                 .withScale(tileScale)
                 .build();
 
-        MapTileBuilder doorTile = new MapTileBuilder(doorFrame)
-                .withTileType(TileType.NOT_PASSABLE);
+        MapTileBuilder doorTile = new MapTileBuilder(doorFrame);
 
         mapTiles.add(doorTile);
 
