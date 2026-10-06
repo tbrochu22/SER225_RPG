@@ -5,7 +5,7 @@ import Engine.Screen;
 import Game.GameState;
 import Game.ScreenCoordinator;
 import Level.*;
-import Maps.TestMap;
+import Maps.RockyPathMap;
 import Players.Knight;
 import Utils.Direction;
 import java.util.Random;
@@ -38,7 +38,7 @@ public class PlayLevelScreen extends Screen implements GameListener {
         flagManager.addFlag("hasFoundBall", false);
 
         // define/setup map
-        map = new TestMap();
+        map = new RockyPathMap();
         map.setFlagManager(flagManager);
 
         // setup player
