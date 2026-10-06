@@ -2,12 +2,15 @@ package Screens;
 
 import Engine.GraphicsHandler;
 import Engine.Screen;
+import EnhancedMapTiles.Rflower;
 import Game.GameState;
 import Game.ScreenCoordinator;
 import Level.*;
 import Maps.TestMap;
 import Players.Knight;
 import Utils.Direction;
+
+import java.util.ArrayList;
 import java.util.Random;
 import Utils.Point;
 
@@ -25,6 +28,7 @@ public class PlayLevelScreen extends Screen implements GameListener {
     protected String[] monsterNameStrings;
     protected java.util.Random random;
     protected Utils.Point lastTile;
+    protected ArrayList<Rflower> flowers;
 
     public PlayLevelScreen(ScreenCoordinator screenCoordinator) {
         this.screenCoordinator = screenCoordinator;
@@ -41,6 +45,12 @@ public class PlayLevelScreen extends Screen implements GameListener {
         // define/setup map
         map = new TestMap();
         map.setFlagManager(flagManager);
+        flowers = new ArrayList<>();
+        for(EnhancedMapTile tile: map.getEnhancedMapTiles()){
+            if(tile instanceof Rflower){
+                flowers.add((Rflower) tile);
+            }
+        }
 
         // setup player
         player = new Knight(map.getPlayerStartPosition().x, map.getPlayerStartPosition().y);
@@ -171,12 +181,18 @@ public class PlayLevelScreen extends Screen implements GameListener {
     public void encounterChance(){
         //essentially this chunk checks if the spot the player is now is different from the last time lastTile was saved
         Point currentTile = map.getTileIndexByPosition(player.getX(), player.getY());
-        if (currentTile.x != lastTile.x || currentTile.y != lastTile.y) {
-            if(random.nextFloat() <= 0.1f){
-                encounterScreen.setMonsterName(monsterNameStrings[random.nextInt(monsterNameStrings.length)]);
-                playLevelScreenState = PlayLevelScreenState.ENCOUNTER;
+        for(Rflower flower: flowers){
+            Point flowerTile = map.getTileIndexByPosition(flower.getX(), flower.getY());
+            if(currentTile.x == flowerTile.x && currentTile.y == flowerTile.y){
+                if (currentTile.x != lastTile.x || currentTile.y != lastTile.y) {
+                    if(random.nextFloat() <= 0.1f){
+                    encounterScreen.setMonsterName(monsterNameStrings[random.nextInt(monsterNameStrings.length)]);
+                    playLevelScreenState = PlayLevelScreenState.ENCOUNTER;
+                    }
+                }
             }
-        lastTile = map.getTileIndexByPosition(player.getX(), player.getY());
         }
+        lastTile = map.getTileIndexByPosition(player.getX(), player.getY());
+        //System.out.println(currentTile + " " + flowerTile);
     }
 }
