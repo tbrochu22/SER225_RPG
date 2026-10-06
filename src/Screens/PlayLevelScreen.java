@@ -2,14 +2,15 @@ package Screens;
 
 import Engine.GraphicsHandler;
 import Engine.Screen;
+import EnhancedMapTiles.Flower;
 import Game.GameState;
 import Game.ScreenCoordinator;
 import Level.*;
 import Maps.TestMap;
+import Music.MusicPlayer;
 import Players.Knight;
 import Utils.Direction;
 import java.util.Random;
-import Utils.Point;
 
 // This class is for when the RPG game is actually being played
 public class PlayLevelScreen extends Screen implements GameListener {
@@ -75,7 +76,7 @@ public class PlayLevelScreen extends Screen implements GameListener {
             case RUNNING:
                 player.update();
                 map.update(player);
-                encounterChance();
+                checkFlowers();
                 break;
             // if level has been completed, bring up level cleared screen
             case LEVEL_COMPLETED:
@@ -91,6 +92,15 @@ public class PlayLevelScreen extends Screen implements GameListener {
         }
     }
 
+    private void checkFlowers() {
+        for (EnhancedMapTile tile : map.getEnhancedMapTiles()) {
+            if (tile instanceof Flower && ((Flower) tile).consumeTrigger()) {
+                onFight();
+                break;
+            }
+        }
+    }
+
     @Override
     public void onWin() {
         // when this method is called within the game, it signals the game has been "won"
@@ -101,6 +111,7 @@ public class PlayLevelScreen extends Screen implements GameListener {
     public void onFight() {
         // when this method is called within the game, it signals that a boss fight has been triggered
         playLevelScreenState = PlayLevelScreenState.CUTAWAY;
+        MusicPlayer.playMusic("src/music/battle-music.wav");
     }
 
     public void draw(GraphicsHandler graphicsHandler) {
@@ -146,15 +157,15 @@ public class PlayLevelScreen extends Screen implements GameListener {
     public void returnFromEncounter(){
         playLevelScreenState = PlayLevelScreenState.RUNNING;
     }
-    public void encounterChance(){
+    //public void encounterChance(){
         //essentially this chunk checks if the spot the player is now is different from the last time lastTile was saved
-        Point currentTile = map.getTileIndexByPosition(player.getX(), player.getY());
-        if (currentTile.x != lastTile.x || currentTile.y != lastTile.y) {
-            if(random.nextFloat() <= 0.1f){
-                encounterScreen.setMonsterName(monsterNameStrings[random.nextInt(monsterNameStrings.length)]);
-                playLevelScreenState = PlayLevelScreenState.ENCOUNTER;
-            }
-        lastTile = map.getTileIndexByPosition(player.getX(), player.getY());
-        }
-    }
+        //Point currentTile = map.getTileIndexByPosition(player.getX(), player.getY());
+        //if (currentTile.x != lastTile.x || currentTile.y != lastTile.y) {
+            //if(random.nextFloat() <= 0.1f){
+               // encounterScreen.setMonsterName(monsterNameStrings[random.nextInt(monsterNameStrings.length)]);
+                //playLevelScreenState = PlayLevelScreenState.ENCOUNTER;
+            //}
+        //lastTile = map.getTileIndexByPosition(player.getX(), player.getY());
+        //}
+    //}
 }

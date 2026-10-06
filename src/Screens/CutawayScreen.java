@@ -1,8 +1,8 @@
 package Screens;
 
 import Engine.*;
+import Music.MusicPlayer;
 import SpriteFont.SpriteFont;
-
 import java.awt.*;
 
 // This class is a placeholder for the "cutaway to fight" screen that plays when the player
@@ -22,19 +22,20 @@ public class CutawayScreen extends Screen {
     @Override
     public void initialize() {
         cutawayMessage = new SpriteFont("Cutaway not created", 220, 239, "Arial", 30, Color.white);
-        instructions = new SpriteFont("Press Escape to return to the game", 220, 279, "Arial", 20, Color.white);
-        keyLocker.lockKey(Key.ESC);
+        instructions = new SpriteFont("Press Enter to return to the game", 220, 279, "Arial", 20, Color.white);
+        keyLocker.lockKey(Key.ENTER);
     }
 
     @Override
     public void update() {
-        if (Keyboard.isKeyUp(Key.ESC)) {
-            keyLocker.unlockKey(Key.ESC);
+        if (Keyboard.isKeyUp(Key.ENTER)) {
+            keyLocker.unlockKey(Key.ENTER);
         }
 
         // if escape is pressed, return to normal gameplay
-        if (Keyboard.isKeyDown(Key.ESC) && !keyLocker.isKeyLocked(Key.ESC)) {
-            keyLocker.lockKey(Key.ESC);
+        if (Keyboard.isKeyDown(Key.ENTER) && !keyLocker.isKeyLocked(Key.ENTER)) {
+            keyLocker.lockKey(Key.ENTER);
+            MusicPlayer.playMusic("src/music/Inductance.wav");
             playLevelScreen.endCutaway();
         }
     }

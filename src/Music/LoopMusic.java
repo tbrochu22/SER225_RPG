@@ -5,7 +5,7 @@ package Music;
 public class LoopMusic {
 
     public static void main(String[] args) {
-        String filePath = "src\\music\\initial_d___deja_vu.wav";
+        String filePath = "src/music/Inductance.wav";
 
         MusicPlayer musicObject = new MusicPlayer();
         musicObject.playMusic(filePath);
