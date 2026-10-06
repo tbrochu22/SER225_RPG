@@ -1,6 +1,7 @@
 package Maps;
 
 import EnhancedMapTiles.Rflower;
+import EnhancedMapTiles.Flower;
 import Level.EnhancedMapTile;
 import Level.Map;
 import Level.NPC;
@@ -30,11 +31,19 @@ public class RockyPathMap extends Map {
         ArrayList<EnhancedMapTile> enhancedMapTiles = new ArrayList<>();
 
         // flowers planted in a few of the grass patches scattered around the map
-        int[][] flowerSpots = {
+        int[][] flowerSpotsR = {
                 {17, 34}, {20, 15}, {17, 14}, {22, 27}, {23, 3}, {18, 7}, {21, 4}
         };
-        for (int[] spot : flowerSpots) {
+        for (int[] spot : flowerSpotsR) {
             Rflower flower = new Rflower(getMapTile(spot[0], spot[1]).getLocation());
+            enhancedMapTiles.add(flower);
+        }
+
+        int[][] flowerSpotsY = {
+                {20, 5}, {30 , 2}, {30, 4}, {27, 35}
+        };
+        for (int[] spot : flowerSpotsY) {
+            Flower flower = new Flower(getMapTile(spot[0], spot[1]).getLocation());
             enhancedMapTiles.add(flower);
         }
 
