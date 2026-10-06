@@ -4,6 +4,7 @@ import Builders.FrameBuilder;
 import Builders.MapTileBuilder;
 import Engine.ImageLoader;
 import GameObject.Frame;
+import GameObject.SpriteSheet;
 import Level.TileType;
 import Level.Tileset;
 
@@ -78,6 +79,17 @@ public class RockyTileset extends Tileset {
                 .withTileType(TileType.NOT_PASSABLE);
 
         mapTiles.add(shrubTile);
+
+        // index 6 -- patch of grass poking through the rocks (passable)
+        // reuses the grass texture (top-left tile) from CommonTileset.png
+        SpriteSheet commonTilesetSheet = new SpriteSheet(ImageLoader.load("CommonTileset.png"), 16, 16);
+        Frame grassFrame = new FrameBuilder(commonTilesetSheet.getSubImage(0, 0))
+                .withScale(tileScale)
+                .build();
+
+        MapTileBuilder grassTile = new MapTileBuilder(grassFrame);
+
+        mapTiles.add(grassTile);
 
         return mapTiles;
     }

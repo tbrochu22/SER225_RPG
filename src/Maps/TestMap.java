@@ -2,6 +2,7 @@ package Maps;
 
 import EnhancedMapTiles.Flower;
 import EnhancedMapTiles.PushableRock;
+import EnhancedMapTiles.Rflower;
 import Level.*;
 import NPCs.Boss1;
 import NPCs.Bug;
@@ -27,6 +28,8 @@ public class TestMap extends Map {
         enhancedMapTiles.add(pushableRock);
         Flower flower = new Flower(getMapTile(10, 10).getLocation());
         enhancedMapTiles.add(flower);
+        Rflower rFlower = new Rflower(getMapTile(11, 10).getLocation());
+        enhancedMapTiles.add(rFlower);
         return enhancedMapTiles;
     }
 

@@ -1,5 +1,6 @@
 package Maps;
 
+import EnhancedMapTiles.Rflower;
 import Level.EnhancedMapTile;
 import Level.Map;
 import Level.NPC;
@@ -16,6 +17,7 @@ import java.util.ArrayList;
 
 // A rocky outdoor map with a winding dirt path cutting through it, bordered by cliff walls.
 // Mage greets the player at the start of the path, Archer says hi partway down, and Boss1 waits near the end.
+// Small grass patches with flowers are scattered around the rocky ground for extra variety.
 public class RockyPathMap extends Map {
 
     public RockyPathMap() {
@@ -25,7 +27,18 @@ public class RockyPathMap extends Map {
 
     @Override
     public ArrayList<EnhancedMapTile> loadEnhancedMapTiles() {
-        return new ArrayList<>();
+        ArrayList<EnhancedMapTile> enhancedMapTiles = new ArrayList<>();
+
+        // flowers planted in a few of the grass patches scattered around the map
+        int[][] flowerSpots = {
+                {17, 34}, {20, 15}, {17, 14}, {22, 27}, {23, 3}, {18, 7}, {21, 4}
+        };
+        for (int[] spot : flowerSpots) {
+            Rflower flower = new Rflower(getMapTile(spot[0], spot[1]).getLocation());
+            enhancedMapTiles.add(flower);
+        }
+
+        return enhancedMapTiles;
     }
 
     @Override

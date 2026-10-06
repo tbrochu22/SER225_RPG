@@ -21,7 +21,7 @@ public class Game {
         ScreenManager screenManager = gameWindow.getScreenManager();
         screenManager.setCurrentScreen(new ScreenCoordinator());
         MusicPlayer music = new MusicPlayer();
-        String musicPath = "src/music/initial_d___deja_vu.wav";
+        String musicPath = "src/music/Inductance.wav";
         // Start music
         music.playMusic(musicPath);
         gameWindow.startGame();
