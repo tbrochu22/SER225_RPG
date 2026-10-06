@@ -24,23 +24,24 @@ public class Textbox {
     protected final int x = 22;
     protected final int bottomY = 460;
     protected final int topY = 22;
+    protected final int rightSideX = 800 - 260;
     protected final int fontX = 35;
     protected final int fontBottomY = 472;
     protected final int fontTopY = 34;
-    protected final int width = 750;
-    protected final int height = 100;
+    protected int width = 750;
+    protected int height = 100;
 
     // options textbox constants
-    protected final int optionX = 680;
+    protected int optionX = 680;
     protected final int optionBottomY = 350;
     protected final int optionTopY = 130;
-    protected final int optionWidth = 92;
-    protected final int optionHeight = 100;
-    protected final int fontOptionX = 706;
+    protected int optionWidth = 92;
+    protected int optionHeight = 100;
+    protected int fontOptionX = 706;
     protected final int fontOptionBottomYStart = 365;
     protected final int fontOptionTopYStart = 145;
     protected final int fontOptionSpacing = 35;
-    protected final int optionPointerX = 690;
+    protected int optionPointerX = 690;
     protected final int optionPointerYBottomStart = 378;
     protected final int optionPointerYTopStart = 158;
 
@@ -54,6 +55,7 @@ public class Textbox {
     private Key interactKey = Key.SPACE;
 
     private Map map;
+    private boolean forceLeftSide = false;
 
     public Textbox(Map map) {
         this.map = map;
@@ -98,11 +100,20 @@ public class Textbox {
         return textQueue.isEmpty();
     }
 
+    public void clear() {
+        textQueue.clear();
+        currentTextItem = null;
+        text = null;
+        options = null;
+        selectedOptionIndex = 0;
+    }
+
     public void update() {
         // if textQueue has more text to display and the interact key button was pressed previously, display new text
         if (!textQueue.isEmpty() && keyLocker.isKeyLocked(interactKey)) {
             currentTextItem = textQueue.peek();
             options = null;
+            updateBoxSize();
 
             // if camera is at bottom of screen, text is drawn at top of screen instead of the bottom like usual
             // to prevent it from covering the player
@@ -133,7 +144,7 @@ public class Textbox {
 
             // if an option was selected, set output manager flag to the index of the selected option
             // a script can then look at output manager later to see which option was selected and do with that information what it wants
-            if (options != null) {
+            if (options != null && map.getActiveScript() != null) {
                 map.getActiveScript().getScriptActionOutputManager().addFlag("TEXTBOX_OPTION_SELECTION", selectedOptionIndex);
             }
         }
@@ -142,25 +153,79 @@ public class Textbox {
         }
 
         if (options != null) {
-            if (Keyboard.isKeyDown(Key.DOWN) && !keyLocker.isKeyLocked(Key.DOWN)) {
-                keyLocker.lockKey(Key.DOWN);
+            if (Keyboard.isKeyDown(Key.S) && !keyLocker.isKeyLocked(Key.S)) {
+                keyLocker.lockKey(Key.S);
                 if (selectedOptionIndex < options.size() - 1) {
                     selectedOptionIndex++;
                 }
             }
-            if (Keyboard.isKeyDown(Key.UP) && !keyLocker.isKeyLocked(Key.UP)) {
-                keyLocker.lockKey(Key.UP);
+            if (Keyboard.isKeyDown(Key.W) && !keyLocker.isKeyLocked(Key.W)) {
+                keyLocker.lockKey(Key.W);
                 if (selectedOptionIndex > 0) {
                     selectedOptionIndex--;
                 }
             }
-            if (Keyboard.isKeyUp(Key.DOWN)) {
-                keyLocker.unlockKey(Key.DOWN);
+            if (Keyboard.isKeyUp(Key.S)) {
+                keyLocker.unlockKey(Key.S);
             }
-            if (Keyboard.isKeyUp(Key.UP)) {
-                keyLocker.unlockKey(Key.UP);
+            if (Keyboard.isKeyUp(Key.W)) {
+                keyLocker.unlockKey(Key.W);
             }
         }
+    }
+
+    private void updateBoxSize() {
+        int screenWidth = 800;
+        int screenHeight = 600;
+
+        if (currentTextItem == null) {
+            width = 750;
+            height = 100;
+            optionWidth = 92;
+            optionHeight = 100;
+            optionX = 680;
+            fontOptionX = 706;
+            optionPointerX = 690;
+            return;
+        }
+
+        String textToMeasure = currentTextItem.getText();
+        String[] lines = textToMeasure.split("\\n");
+        int longestLineLength = 0;
+        for (String line : lines) {
+            longestLineLength = Math.max(longestLineLength, line.length());
+        }
+
+        int estimatedWidth = Math.max(200, longestLineLength * 13 + 60);
+        int estimatedHeight = Math.max(100, lines.length * 30 + 40);
+
+        optionWidth = 92;
+        optionHeight = 100;
+        fontOptionX = 706;
+        optionPointerX = 690;
+        optionX = 680;
+
+        if (currentTextItem.getOptions() != null && !currentTextItem.getOptions().isEmpty()) {
+            int longestOptionLength = 0;
+            for (String optionText : currentTextItem.getOptions()) {
+                longestOptionLength = Math.max(longestOptionLength, optionText.length());
+            }
+
+            optionWidth = Math.max(92, Math.min(260, longestOptionLength * 16 + 50));
+            optionHeight = Math.max(100, currentTextItem.getOptions().size() * fontOptionSpacing + 40);
+
+            int idealWidth = Math.max(estimatedWidth, optionWidth + 70);
+            width = Math.min(Math.max(idealWidth, 200), screenWidth - 80);
+
+            optionX = rightSideX;
+            fontOptionX = optionX + 26;
+            optionPointerX = optionX + 10;
+        }
+        else {
+            width = Math.min(Math.max(estimatedWidth, 200), screenWidth - 80);
+        }
+
+        height = Math.min(Math.max(estimatedHeight, 100), screenHeight - 180);
     }
 
     public void draw(GraphicsHandler graphicsHandler) {
@@ -168,11 +233,14 @@ public class Textbox {
         // if camera is at bottom of screen, textbox is drawn at top of screen instead of the bottom like usual
         // to prevent it from covering the player
         int y = !map.getCamera().isAtBottomOfMap() ? bottomY : topY;
-        graphicsHandler.drawFilledRectangleWithBorder(x, y, width, height, Color.white, Color.black, 2);
+        boolean useRightSide = !forceLeftSide && options != null;
+        int boxX = useRightSide ? rightSideX : x;
+        graphicsHandler.drawFilledRectangleWithBorder(boxX, y, width, height, Color.white, Color.black, 2);
 
         if (text != null) {
             // draw text in textbox
-            text.drawWithParsedNewLines(graphicsHandler, 10);
+            int textX = useRightSide ? boxX + 15 : x + 15;
+            text.drawWithParsedNewLines(graphicsHandler, textX - x + 10);
             
             if (options != null) {
                 // draw options textbox
@@ -194,6 +262,10 @@ public class Textbox {
         }
     }
 
+    public int getSelectedOptionIndex() {
+        return selectedOptionIndex;
+    }
+
     public boolean isActive() {
         return isActive;
     }
@@ -204,6 +276,10 @@ public class Textbox {
 
     public void setInteractKey(Key interactKey) {
         this.interactKey = interactKey;
+    }
+
+    public void setForceLeftSide(boolean forceLeftSide) {
+        this.forceLeftSide = forceLeftSide;
     }
 
 }

@@ -468,6 +468,7 @@ public abstract class Map {
         if (interactedEntity != null) {
             setActiveScript(interactedEntity.getInteractScript());
         }
+
     }
 
     private boolean isInteractedEntityValid(MapEntity interactedEntity, Player player) {
@@ -610,6 +611,12 @@ public abstract class Map {
 
     public void addListener(GameListener listener) {
         this.listeners.add(listener);
+    }
+
+    public void notifySwapMoves() {
+        for (GameListener listener : listeners) {
+            listener.onSwapMoves();
+        }
     }
 
     public ArrayList<GameListener> getListeners() {
