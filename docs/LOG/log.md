@@ -31,3 +31,8 @@ Sprint 1
         Added endCutaway() to switch back to RUNNING
 
 Sprint 2
+
+    New Map + Placing NPC's
+    
+    MapFiles/test_map.txt
+        Changed the numbers on the map to fit the cooresponding tiles

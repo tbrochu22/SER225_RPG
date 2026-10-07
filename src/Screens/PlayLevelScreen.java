@@ -6,6 +6,7 @@ import EnhancedMapTiles.Rflower;
 import Game.GameState;
 import Game.ScreenCoordinator;
 import Level.*;
+import Maps.RockyPathMap;
 import Maps.TestMap;
 import Players.Knight;
 import Utils.Direction;
@@ -43,7 +44,7 @@ public class PlayLevelScreen extends Screen implements GameListener {
         flagManager.addFlag("hasFoundBall", false);
 
         // define/setup map
-        map = new TestMap();
+        map = new RockyPathMap();
         map.setFlagManager(flagManager);
         flowers = new ArrayList<>();
         for(EnhancedMapTile tile: map.getEnhancedMapTiles()){

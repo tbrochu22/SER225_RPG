@@ -1,6 +1,7 @@
 package MapEditor;
 
 import Level.Map;
+import Maps.RockyPathMap;
 import Maps.TestMap;
 import Maps.TitleScreenMap;
 
@@ -11,6 +12,7 @@ public class EditorMaps {
         return new ArrayList<String>() {{
             add("TestMap");
             add("TitleScreen");
+            add("RockyPathMap");
         }};
     }
 
@@ -20,6 +22,8 @@ public class EditorMaps {
                 return new TestMap();
             case "TitleScreen":
                 return new TitleScreenMap();
+            case "RockyPathMap":
+                return new RockyPathMap();
             default:
                 throw new RuntimeException("Unrecognized map name");
         }

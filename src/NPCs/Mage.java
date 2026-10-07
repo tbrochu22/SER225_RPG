@@ -11,11 +11,11 @@ import Utils.Point;
 
 import java.util.HashMap;
 
-// This class is for the walrus NPC
-public class Walrus extends NPC {
+// This class is for the mage npc, placed at the start of the rocky path to greet/introduce the player
+public class Mage extends NPC {
 
-    public Walrus(int id, Point location) {
-        super(id, location.x, location.y, new SpriteSheet(ImageLoader.load("Mage.jpg"), 24, 24), "STAND_LEFT");
+    public Mage(int id, Point location) {
+        super(id, location.x, location.y, new SpriteSheet(ImageLoader.load("Mage.png"), 24, 24), "STAND_LEFT");
     }
 
     @Override
@@ -24,16 +24,16 @@ public class Walrus extends NPC {
             put("STAND_LEFT", new Frame[] {
                     new FrameBuilder(spriteSheet.getSprite(0, 0))
                             .withScale(3)
-                            .withBounds(7, 13, 11, 7)
-                            .withImageEffect(ImageEffect.FLIP_HORIZONTAL)
+                            .withBounds(4, 3, 17, 20)
                             .build()
             });
             put("STAND_RIGHT", new Frame[] {
-                   new FrameBuilder(spriteSheet.getSprite(0, 0))
-                           .withScale(3)
-                           .withBounds(7, 13, 11, 7)
-                           .build()
-           });
+                    new FrameBuilder(spriteSheet.getSprite(0, 0))
+                            .withScale(3)
+                            .withBounds(4, 3, 17, 20)
+                            .withImageEffect(ImageEffect.FLIP_HORIZONTAL)
+                            .build()
+            });
         }};
     }
 
