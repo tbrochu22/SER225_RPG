@@ -1,6 +1,7 @@
 package Level;
 
 import java.awt.Color;
+import java.util.ArrayList;
 
 import Engine.GraphicsHandler;
 import Engine.Key;
@@ -33,12 +34,13 @@ public abstract class Player extends GameObject {
 
     // define keys
     protected KeyLocker keyLocker = new KeyLocker();
-    protected Key MOVE_LEFT_KEY = Key.LEFT;
-    protected Key MOVE_RIGHT_KEY = Key.RIGHT;
-    protected Key MOVE_UP_KEY = Key.UP;
-    protected Key MOVE_DOWN_KEY = Key.DOWN;
+    protected Key MOVE_LEFT_KEY = Key.A;
+    protected Key MOVE_RIGHT_KEY = Key.D;
+    protected Key MOVE_UP_KEY = Key.W;
+    protected Key MOVE_DOWN_KEY = Key.S;
     protected Key INTERACT_KEY = Key.SPACE;
     protected Key SPRINT_KEY = Key.SHIFT;
+    protected Key MENU_KEY = Key.E;
 
     protected boolean isLocked = false;
 
@@ -48,31 +50,6 @@ public abstract class Player extends GameObject {
         playerState = PlayerState.STANDING;
         previousPlayerState = playerState;
         this.affectedByTriggers = true;
-    }
-
-    public void update() {
-        if (!isLocked) {
-            moveAmountX = 0;
-            moveAmountY = 0;
-
-            // if player is currently playing through level (has not won or lost)
-            // update player's state and current actions, which includes things like determining how much it should move each frame and if its walking or jumping
-            do {
-                previousPlayerState = playerState;
-                handlePlayerState();
-            } while (previousPlayerState != playerState);
-
-            // move player with respect to map collisions based on how much player needs to move this frame
-            lastAmountMovedY = super.moveYHandleCollision(moveAmountY);
-            lastAmountMovedX = super.moveXHandleCollision(moveAmountX);
-        }
-
-        handlePlayerAnimation();
-
-        updateLockedKeys();
-
-        // update player's animation
-        super.update();
     }
 
     // based on player's current state, call appropriate player state handling method
@@ -177,6 +154,9 @@ public abstract class Player extends GameObject {
         if (Keyboard.isKeyUp(INTERACT_KEY) && !isLocked) {
             keyLocker.unlockKey(INTERACT_KEY);
         }
+        if (Keyboard.isKeyUp(MENU_KEY) && !isLocked) {
+            keyLocker.unlockKey(MENU_KEY);
+        }
     }
 
     // anything extra the player should do based on interactions can be handled here
@@ -276,11 +256,83 @@ public abstract class Player extends GameObject {
         }
     }
 
-    // Uncomment this to have game draw player's bounds to make it easier to visualize
-    /*
-    public void draw(GraphicsHandler graphicsHandler) {
-        super.draw(graphicsHandler);
-        drawBounds(graphicsHandler, new Color(255, 0, 0, 100));
+    private boolean playerMenuOpen = false;
+
+    @Override
+    public void update() {
+        if (playerMenuOpen && Keyboard.isKeyUp(MENU_KEY)) {
+            keyLocker.unlockKey(MENU_KEY);
+        }
+
+        if (playerMenuOpen && !keyLocker.isKeyLocked(MENU_KEY) && Keyboard.isKeyDown(MENU_KEY)) {
+            keyLocker.lockKey(MENU_KEY);
+            playerMenuOpen = false;
+            map.getTextbox().clear();
+        }
+
+        if (!isLocked) {
+            moveAmountX = 0;
+            moveAmountY = 0;
+
+            if (map != null && map.getTextbox() != null && !map.getTextbox().isActive()
+                    && !keyLocker.isKeyLocked(MENU_KEY) && Keyboard.isKeyDown(MENU_KEY)) {
+                keyLocker.lockKey(MENU_KEY);
+                openMenu();
+            }
+
+            do {
+                previousPlayerState = playerState;
+                handlePlayerState();
+            } while (previousPlayerState != playerState);
+
+            lastAmountMovedY = super.moveYHandleCollision(moveAmountY);
+            lastAmountMovedX = super.moveXHandleCollision(moveAmountX);
+        }
+
+        if (map != null && map.getTextbox() != null && map.getTextbox().isActive() && map.getTextbox().isTextQueueEmpty()) {
+            map.getTextbox().setIsActive(false);
+            map.getTextbox().setForceLeftSide(false);
+            map.getTextbox().setInteractKey(INTERACT_KEY);
+            if (playerMenuOpen) {
+                playerMenuOpen = false;
+                if (map.getTextbox().getSelectedOptionIndex() == 1) {
+                    System.exit(0);
+                } else if (map.getTextbox().getSelectedOptionIndex() == 0) {
+                    map.notifySwapMoves();
+                }
+            }
+
+            unlock();
+        }
+
+        handlePlayerAnimation();
+        updateLockedKeys();
+        super.update();
     }
-    */
+
+    public void openMenu() {
+        if (map == null || map.getTextbox() == null || map.getTextbox().isActive()) {
+            return;
+        }
+
+        playerMenuOpen = true;
+        map.getTextbox().setIsActive(true);
+        map.getTextbox().setInteractKey(INTERACT_KEY);
+        map.getTextbox().setForceLeftSide(true);
+        map.getTextbox().addText(new TextboxItem("Menu", new ArrayList<String>() {{
+            add("Swap Moves");
+            add("Quit Game");
+        }}));
+        map.getTextbox().setIsActive(true);
+        lock();
+    }
+
+    // Uncomment this to have game draw player's bounds to make it easier to visualize
+    
+    //public void draw(GraphicsHandler graphicsHandler) {
+        //super.draw(graphicsHandler);
+        //drawBounds(graphicsHandler, new Color(255, 0, 0, 100));
+    //}
+    
+
 }

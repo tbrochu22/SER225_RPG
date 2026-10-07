@@ -2,16 +2,18 @@ package Screens;
 
 import Engine.GraphicsHandler;
 import Engine.Screen;
-import EnhancedMapTiles.Flower;
+import EnhancedMapTiles.Rflower;
 import Game.GameState;
 import Game.ScreenCoordinator;
 import Level.*;
 import Maps.RockyPathMap;
 import Maps.TestMap;
-import Music.MusicPlayer;
 import Players.Knight;
 import Utils.Direction;
+
+import java.util.ArrayList;
 import java.util.Random;
+import Utils.Point;
 
 // This class is for when the RPG game is actually being played
 public class PlayLevelScreen extends Screen implements GameListener {
@@ -21,11 +23,13 @@ public class PlayLevelScreen extends Screen implements GameListener {
     protected PlayLevelScreenState playLevelScreenState;
     protected WinScreen winScreen;
     protected CutawayScreen cutawayScreen;
+    protected SwapMovesScreen swapMovesScreen;
     protected FlagManager flagManager;
     protected EncounterScreen encounterScreen;
     protected String[] monsterNameStrings;
     protected java.util.Random random;
     protected Utils.Point lastTile;
+    protected ArrayList<Rflower> flowers;
 
     public PlayLevelScreen(ScreenCoordinator screenCoordinator) {
         this.screenCoordinator = screenCoordinator;
@@ -42,6 +46,12 @@ public class PlayLevelScreen extends Screen implements GameListener {
         // define/setup map
         map = new RockyPathMap();
         map.setFlagManager(flagManager);
+        flowers = new ArrayList<>();
+        for(EnhancedMapTile tile: map.getEnhancedMapTiles()){
+            if(tile instanceof Rflower){
+                flowers.add((Rflower) tile);
+            }
+        }
 
         // setup player
         player = new Knight(map.getPlayerStartPosition().x, map.getPlayerStartPosition().y);
@@ -68,6 +78,7 @@ public class PlayLevelScreen extends Screen implements GameListener {
         random = new Random();
         monsterNameStrings = new String[] {"Monster x", "Monster y", "Monster z"};
         cutawayScreen = new CutawayScreen(this);
+        swapMovesScreen = new SwapMovesScreen(this);
     }
 
     public void update() {
@@ -76,8 +87,10 @@ public class PlayLevelScreen extends Screen implements GameListener {
             // if level is "running" update player and map to keep game logic for the platformer level going
             case RUNNING:
                 player.update();
-                map.update(player);
-                checkFlowers();
+                if (playLevelScreenState == PlayLevelScreenState.RUNNING) {
+                    map.update(player);
+                    encounterChance();
+                }
                 break;
             // if level has been completed, bring up level cleared screen
             case LEVEL_COMPLETED:
@@ -90,17 +103,13 @@ public class PlayLevelScreen extends Screen implements GameListener {
             case CUTAWAY:
                 cutawayScreen.update();
                 break;
+            case SWAP_MOVES:
+                swapMovesScreen.update();
+                break;
         }
     }
 
-    private void checkFlowers() {
-        for (EnhancedMapTile tile : map.getEnhancedMapTiles()) {
-            if (tile instanceof Flower && ((Flower) tile).consumeTrigger()) {
-                onFight();
-                break;
-            }
-        }
-    }
+    
 
     @Override
     public void onWin() {
@@ -112,7 +121,6 @@ public class PlayLevelScreen extends Screen implements GameListener {
     public void onFight() {
         // when this method is called within the game, it signals that a boss fight has been triggered
         playLevelScreenState = PlayLevelScreenState.CUTAWAY;
-        MusicPlayer.playMusic("src/music/battle-music.wav");
     }
 
     public void draw(GraphicsHandler graphicsHandler) {
@@ -129,6 +137,9 @@ public class PlayLevelScreen extends Screen implements GameListener {
             break;
             case CUTAWAY:
                 cutawayScreen.draw(graphicsHandler);
+                break;
+            case SWAP_MOVES:
+                swapMovesScreen.draw(graphicsHandler);
                 break;
         }
     }
@@ -150,23 +161,39 @@ public class PlayLevelScreen extends Screen implements GameListener {
         playLevelScreenState = PlayLevelScreenState.RUNNING;
     }
 
+    @Override
+    public void onSwapMoves() {
+        playLevelScreenState = PlayLevelScreenState.SWAP_MOVES;
+    }
+
+    public void endSwapMoves() {
+        playLevelScreenState = PlayLevelScreenState.RUNNING;
+        player.openMenu();
+    }
+
     // This enum represents the different states this screen can be in
     private enum PlayLevelScreenState {
-        RUNNING, LEVEL_COMPLETED, ENCOUNTER, CUTAWAY
+        RUNNING, LEVEL_COMPLETED, ENCOUNTER, CUTAWAY, SWAP_MOVES
     }
 
     public void returnFromEncounter(){
         playLevelScreenState = PlayLevelScreenState.RUNNING;
     }
-    //public void encounterChance(){
+    public void encounterChance(){
         //essentially this chunk checks if the spot the player is now is different from the last time lastTile was saved
-        //Point currentTile = map.getTileIndexByPosition(player.getX(), player.getY());
-        //if (currentTile.x != lastTile.x || currentTile.y != lastTile.y) {
-            //if(random.nextFloat() <= 0.1f){
-               // encounterScreen.setMonsterName(monsterNameStrings[random.nextInt(monsterNameStrings.length)]);
-                //playLevelScreenState = PlayLevelScreenState.ENCOUNTER;
-            //}
-        //lastTile = map.getTileIndexByPosition(player.getX(), player.getY());
-        //}
-    //}
+        Point currentTile = map.getTileIndexByPosition(player.getX(), player.getY());
+        for(Rflower flower: flowers){
+            Point flowerTile = map.getTileIndexByPosition(flower.getX(), flower.getY());
+            if(currentTile.x == flowerTile.x && currentTile.y == flowerTile.y){
+                if (currentTile.x != lastTile.x || currentTile.y != lastTile.y) {
+                    if(random.nextFloat() <= 0.1f){
+                    encounterScreen.setMonsterName(monsterNameStrings[random.nextInt(monsterNameStrings.length)]);
+                    playLevelScreenState = PlayLevelScreenState.ENCOUNTER;
+                    }
+                }
+            }
+        }
+        lastTile = map.getTileIndexByPosition(player.getX(), player.getY());
+        //System.out.println(currentTile + " " + flowerTile);
+    }
 }

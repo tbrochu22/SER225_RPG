@@ -30,6 +30,12 @@ public class TestMap extends Map {
         enhancedMapTiles.add(flower);
         Rflower rFlower = new Rflower(getMapTile(11, 10).getLocation());
         enhancedMapTiles.add(rFlower);
+        Rflower rFlower2 = new Rflower(getMapTile(11, 11).getLocation());
+        enhancedMapTiles.add(rFlower2);
+        Rflower rFlower3 = new Rflower(getMapTile(10, 10).getLocation());
+        enhancedMapTiles.add(rFlower3);
+        Rflower rFlower4 = new Rflower(getMapTile(12, 10).getLocation());
+        enhancedMapTiles.add(rFlower4);
         return enhancedMapTiles;
     }
 
