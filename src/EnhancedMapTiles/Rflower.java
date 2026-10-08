@@ -25,9 +25,6 @@ public class Rflower extends EnhancedMapTile {
         super.update(player);
 
         // If the player touches the flower, make it disappear
-        if (visible && player.touching(this)) {
-            visible = false;
-        }
     }
 
     @Override
