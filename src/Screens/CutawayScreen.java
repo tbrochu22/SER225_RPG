@@ -30,6 +30,7 @@ public class CutawayScreen extends Screen {
     public void update() {
         if (Keyboard.isKeyUp(Key.ENTER)) {
             keyLocker.unlockKey(Key.ENTER);
+            
         }
 
         // if escape is pressed, return to normal gameplay

@@ -7,13 +7,12 @@ import Game.GameState;
 import Game.ScreenCoordinator;
 import Level.*;
 import Maps.RockyPathMap;
-import Maps.TestMap;
+import Music.MusicPlayer;
 import Players.Knight;
 import Utils.Direction;
-
+import Utils.Point;
 import java.util.ArrayList;
 import java.util.Random;
-import Utils.Point;
 
 // This class is for when the RPG game is actually being played
 public class PlayLevelScreen extends Screen implements GameListener {
@@ -177,6 +176,7 @@ public class PlayLevelScreen extends Screen implements GameListener {
     }
 
     public void returnFromEncounter(){
+        MusicPlayer.playMusic("src/music/Inductance.wav");
         playLevelScreenState = PlayLevelScreenState.RUNNING;
     }
     public void encounterChance(){
@@ -188,6 +188,7 @@ public class PlayLevelScreen extends Screen implements GameListener {
                 if (currentTile.x != lastTile.x || currentTile.y != lastTile.y) {
                     if(random.nextFloat() <= 1f){
                     encounterScreen.setMonsterName(monsterNameStrings[random.nextInt(monsterNameStrings.length)]);
+                    MusicPlayer.playMusic("src/music/battle-music.wav");
                     playLevelScreenState = PlayLevelScreenState.ENCOUNTER;
                     }
                 }

@@ -1,15 +1,13 @@
 package Screens;
 
-import Engine.*;
-import SpriteFont.SpriteFont;
-
-import java.awt.*;
-
 import Battle.Grab;
 import Battle.Kick;
 import Battle.Move;
 import Battle.Punch;
 import Battle.Tackle;
+import Engine.*;
+import SpriteFont.SpriteFont;
+import java.awt.*;
 
 // This class is for the encounter screen
 public class EncounterScreen extends Screen {
