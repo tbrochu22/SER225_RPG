@@ -186,7 +186,7 @@ public class PlayLevelScreen extends Screen implements GameListener {
             Point flowerTile = map.getTileIndexByPosition(flower.getX(), flower.getY());
             if(currentTile.x == flowerTile.x && currentTile.y == flowerTile.y){
                 if (currentTile.x != lastTile.x || currentTile.y != lastTile.y) {
-                    if(random.nextFloat() <= 0.1f){
+                    if(random.nextFloat() <= 1f){
                     encounterScreen.setMonsterName(monsterNameStrings[random.nextInt(monsterNameStrings.length)]);
                     playLevelScreenState = PlayLevelScreenState.ENCOUNTER;
                     }

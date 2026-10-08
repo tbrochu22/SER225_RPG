@@ -5,6 +5,12 @@ import SpriteFont.SpriteFont;
 
 import java.awt.*;
 
+import Battle.Grab;
+import Battle.Kick;
+import Battle.Move;
+import Battle.Punch;
+import Battle.Tackle;
+
 // This class is for the encounter screen
 public class EncounterScreen extends Screen {
     protected SpriteFont encounterMessage;
@@ -23,7 +29,9 @@ public class EncounterScreen extends Screen {
     protected SpriteFont playerLabel;
     protected SpriteFont enemyLabel;
     protected SpriteFont[] buttonLabels = new SpriteFont[4];
-    protected String[] moveNames = {"MOVE A", "MOVE B", "MOVE C", "MOVE D"};
+    protected Move[] moves = { new Tackle(), new Punch(), new Kick(), new Grab()};
+    protected int textBoxTimer;
+    protected SpriteFont moveInfoText;
 
     public EncounterScreen(PlayLevelScreen playLevelScreen) {
         this.playLevelScreen = playLevelScreen;
@@ -38,12 +46,16 @@ public class EncounterScreen extends Screen {
     public void initialize() {
         battleCurrentMenuItemX = 0;
         battleCurrentMenuItemY = 0;
+        textBoxTimer = 0;
+        battleMenuItemSelected = -1;
+        moveInfoText = new SpriteFont("...", 35, 405, "Arial", 22, Color.white);
         instructions = new SpriteFont("Press enter to return", 120, 279,"Arial", 20, Color.white);
         keyLocker.lockKey(Key.ENTER);
         keyLocker.lockKey(Key.DOWN);
         keyLocker.lockKey(Key.LEFT);
         keyLocker.lockKey(Key.RIGHT);
         keyLocker.lockKey(Key.UP);
+        keyLocker.lockKey(Key.SPACE);
         playerPlaceholder = new SpriteFont("Player will go here", 95, 400, "Arial", 24, Color.black);
         enemyPlaceholder = new SpriteFont("Enemy will go here", 480, 230, "Arial", 24, Color.black);
         playerLabel = new SpriteFont("Player", 10, ScreenManager.getScreenHeight() - 60, "Arial",24, Color.white);
@@ -56,7 +68,7 @@ public class EncounterScreen extends Screen {
             for(int col = 0; col < 2; col ++){
                 int bx = 440 + col * 160;
                 int by = 395 + row * 70;
-                SpriteFont label = new SpriteFont(moveNames[row * 2 + col], bx + 30, by + 15, "Arial", 28, Color.white);
+                SpriteFont label = new SpriteFont(moves[row * 2 + col].getName(), bx + 30, by + 15, "Arial", 28, Color.white);
                 label.setFontStyle(Font.BOLD);
                 label.setOutlineColor(Color.blue);
                 label.setOutlineThickness(3);
@@ -107,6 +119,22 @@ public class EncounterScreen extends Screen {
         if (Keyboard.isKeyDown(Key.ENTER) && !keyLocker.isKeyLocked(Key.ENTER)) {
             playLevelScreen.returnFromEncounter();
         }
+        if(Keyboard.isKeyUp(Key.SPACE)){
+            keyLocker.unlockKey(Key.SPACE);
+        }
+        if(Keyboard.isKeyDown(Key.SPACE) && !keyLocker.isKeyLocked(Key.SPACE)){
+            battleMenuItemSelected = (battleCurrentMenuItemY * 2 + battleCurrentMenuItemX);
+            keyLocker.lockKey(Key.SPACE);
+            moveInfoText.setText("Name: " + moves[battleMenuItemSelected].getName() + "\nType: " + moves[battleMenuItemSelected].getType() + "\nPower: " + moves[battleMenuItemSelected].getPower() + "\nAccuracy: " + moves[battleMenuItemSelected].getAccuracy());
+            textBoxTimer = 240;
+        }
+        //to make the text box disappear after a set time
+        if(textBoxTimer > 0){
+                textBoxTimer --;
+                if(textBoxTimer == 0){
+                battleMenuItemSelected = -1;
+                }
+            }
     }
 
     public void draw(GraphicsHandler graphicsHandler) {
@@ -152,6 +180,10 @@ public class EncounterScreen extends Screen {
                 graphicsHandler.drawFilledRectangleWithBorder(bx, by, 145, 55, new Color(200, 50, 40), borderColor, 3);
                 buttonLabels[row * 2 + col].draw(graphicsHandler);
             }
+        }
+        if(battleMenuItemSelected != -1){
+            graphicsHandler.drawFilledRectangleWithBorder(20, 395, 400, 125, new Color(30,30,60), Color.white, 3);
+            moveInfoText.drawWithParsedNewLines(graphicsHandler, 6);
         }
         //instructions.draw(graphicsHandler);
     }
