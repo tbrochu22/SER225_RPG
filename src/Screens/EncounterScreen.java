@@ -36,6 +36,9 @@ public class EncounterScreen extends Screen {
     protected Move[] moves = { new Tackle(), new Punch(), new Kick(), new Grab()};
     protected Move[] enemyMoves = { new Roar(), new Bite(), new electricBite(), new Scratch()};
     protected int textBoxTimer;
+    protected int enemyTurnDelay;
+    protected boolean enemyStarts;
+    protected String battleMessage;
     protected SpriteFont moveInfoText;
     protected Random random = new Random();
     protected BufferedImage knightBack;
@@ -51,19 +54,37 @@ public class EncounterScreen extends Screen {
         initialize();
         enemyPlaceholder.setText(mName + " will go here");
     }
+
+    private String useMove(Move move, boolean playerAttacking) {
+        if (random.nextInt(100) >= move.getAccuracy()) {
+            return move.getName() + " missed!";
+        }
+
+        if (playerAttacking) {
+            enemyHp = Math.max(0, enemyHp - move.getPower());
+        } else {
+            playerHp = Math.max(0, playerHp - move.getPower());
+        }
+
+        return move.getName() + " hit for " + move.getPower() + " damage!";
+    }
+
     @Override
     public void initialize() {
         battleCurrentMenuItemX = 0;
         battleCurrentMenuItemY = 0;
-        textBoxTimer = 0;
-        battleMenuItemSelected = -1;
+        enemyStarts = random.nextBoolean();
+        enemyTurnDelay = enemyStarts ? 60 : 0;
+        battleMessage = enemyStarts ? "Enemy moves first!" : "";
+        textBoxTimer = enemyStarts ? 60 : 0;
+        battleMenuItemSelected = enemyStarts ? 0 : -1;
         moveInfoText = new SpriteFont("...", 35, 405, "Arial", 22, Color.white);
         instructions = new SpriteFont("Press enter to return", 120, 279,"Arial", 20, Color.white);
         keyLocker.lockKey(Key.ENTER);
-        keyLocker.lockKey(Key.DOWN);
-        keyLocker.lockKey(Key.LEFT);
-        keyLocker.lockKey(Key.RIGHT);
-        keyLocker.lockKey(Key.UP);
+        keyLocker.lockKey(Key.S);
+        keyLocker.lockKey(Key.A);
+        keyLocker.lockKey(Key.D);
+        keyLocker.lockKey(Key.W);
         keyLocker.lockKey(Key.SPACE);
         playerPlaceholder = new SpriteFont("Player will go here", 95, 400, "Arial", 24, Color.black);
         enemyPlaceholder = new SpriteFont("Enemy will go here", 480, 230, "Arial", 24, Color.black);
@@ -88,43 +109,60 @@ public class EncounterScreen extends Screen {
 
     @Override
     public void update() {
-        if(Keyboard.isKeyUp(Key.DOWN)){
-            keyLocker.unlockKey(Key.DOWN);
-        }
-        if(Keyboard.isKeyDown(Key.DOWN) && !keyLocker.isKeyLocked(Key.DOWN)){
-            //move cursor down here
-            battleCurrentMenuItemY = 1;
-            keyLocker.lockKey(Key.DOWN);
-        }
-        if(Keyboard.isKeyUp(Key.UP)){
-            keyLocker.unlockKey(Key.UP);
-        }
-        if(Keyboard.isKeyDown(Key.UP) && !keyLocker.isKeyLocked(Key.UP)){
-            //move cursor up here
-            battleCurrentMenuItemY = 0;
-            keyLocker.lockKey(Key.UP);
-        }
-        if(Keyboard.isKeyUp(Key.LEFT)){
-            keyLocker.unlockKey(Key.LEFT);
-        }
-        if(Keyboard.isKeyDown(Key.LEFT) && !keyLocker.isKeyLocked(Key.LEFT)){
-            //move cursor left here
-            battleCurrentMenuItemX = 0;
-            keyLocker.lockKey(Key.LEFT);
-        }
-        if(Keyboard.isKeyUp(Key.RIGHT)){
-            keyLocker.unlockKey(Key.RIGHT);
-        }
-        if(Keyboard.isKeyDown(Key.RIGHT) && !keyLocker.isKeyLocked(Key.RIGHT)){
-            //move cursor right here
-            battleCurrentMenuItemX = 1;
-            keyLocker.lockKey(Key.RIGHT);
-        }
         if (Keyboard.isKeyUp(Key.ENTER)) {
             keyLocker.unlockKey(Key.ENTER);
         }
+        if (enemyHp <= 0) {
+            if (Keyboard.isKeyDown(Key.ENTER) && !keyLocker.isKeyLocked(Key.ENTER)) {
+                keyLocker.lockKey(Key.ENTER);
+                playLevelScreen.returnFromEncounter();
+            }
+            return;
+        }
 
-        // if enter is pressed, return to the main screen
+        if (enemyTurnDelay > 0) {
+            enemyTurnDelay--;
+            if (enemyTurnDelay == 0 && enemyHp > 0 && playerHp > 0) {
+                Move enemyMove = enemyMoves[random.nextInt(enemyMoves.length)];
+                battleMessage += "\n" + useMove(enemyMove, false);
+                moveInfoText.setText(battleMessage);
+                textBoxTimer = 240;
+            }
+        }
+
+        if(Keyboard.isKeyUp(Key.S)){
+            keyLocker.unlockKey(Key.S);
+        }
+        if(Keyboard.isKeyDown(Key.S) && !keyLocker.isKeyLocked(Key.S)){
+            //move cursor down here
+            battleCurrentMenuItemY = 1;
+            keyLocker.lockKey(Key.S);
+        }
+        if(Keyboard.isKeyUp(Key.W)){
+            keyLocker.unlockKey(Key.W);
+        }
+        if(Keyboard.isKeyDown(Key.W) && !keyLocker.isKeyLocked(Key.W)){
+            //move cursor up here
+            battleCurrentMenuItemY = 0;
+            keyLocker.lockKey(Key.W);
+        }
+        if(Keyboard.isKeyUp(Key.A)){
+            keyLocker.unlockKey(Key.A);
+        }
+        if(Keyboard.isKeyDown(Key.A) && !keyLocker.isKeyLocked(Key.A)){
+            //move cursor left here
+            battleCurrentMenuItemX = 0;
+            keyLocker.lockKey(Key.A);
+        }
+        if(Keyboard.isKeyUp(Key.D)){
+            keyLocker.unlockKey(Key.D);
+        }
+        if(Keyboard.isKeyDown(Key.D) && !keyLocker.isKeyLocked(Key.D)){
+            //move cursor right here
+            battleCurrentMenuItemX = 1;
+            keyLocker.lockKey(Key.D);
+        }
+        // Allow the player to leave an unfinished encounter.
         if (Keyboard.isKeyDown(Key.ENTER) && !keyLocker.isKeyLocked(Key.ENTER)) {
             playLevelScreen.returnFromEncounter();
         }
@@ -132,14 +170,18 @@ public class EncounterScreen extends Screen {
             keyLocker.unlockKey(Key.SPACE);
         }
         if(Keyboard.isKeyDown(Key.SPACE) && !keyLocker.isKeyLocked(Key.SPACE)){
-            battleMenuItemSelected = (battleCurrentMenuItemY * 2 + battleCurrentMenuItemX);
             keyLocker.lockKey(Key.SPACE);
-            moveInfoText.setText("Name: " + moves[battleMenuItemSelected].getName() + "\nType: " + moves[battleMenuItemSelected].getType() + "\nPower: " + moves[battleMenuItemSelected].getPower() + "\nAccuracy: " + moves[battleMenuItemSelected].getAccuracy());
-            textBoxTimer = 240;
+            if (enemyTurnDelay == 0 && enemyHp > 0 && playerHp > 0) {
+                battleMenuItemSelected = battleCurrentMenuItemY * 2 + battleCurrentMenuItemX;
 
-            int i = random.nextInt(enemyMoves.length);
-            Move enemyMove = enemyMoves[i];
-            System.out.println(enemyMove.getName());
+                battleMessage = useMove(moves[battleMenuItemSelected], true);
+                if (enemyHp > 0) {
+                    enemyTurnDelay = 60;
+                }
+
+                moveInfoText.setText(battleMessage);
+                textBoxTimer = 240;
+            }
         }
         //to make the text box disappear after a set time
         if(textBoxTimer > 0){
@@ -151,6 +193,16 @@ public class EncounterScreen extends Screen {
     }
 
     public void draw(GraphicsHandler graphicsHandler) {
+        if (enemyHp <= 0) {
+            drawVictoryScreen(graphicsHandler);
+            return;
+        }
+
+        if (playerHp <= 0) {
+            drawLoseScreen(graphicsHandler);
+            return;
+        }
+
         graphicsHandler.drawFilledRectangle(0, 0, ScreenManager.getScreenWidth(), ScreenManager.getScreenHeight(), Color.blue);
        Graphics2D g = graphicsHandler.getGraphics();
         g.setColor(new Color(250, 230, 90));
@@ -204,5 +256,43 @@ public class EncounterScreen extends Screen {
             moveInfoText.drawWithParsedNewLines(graphicsHandler, 6);
         }
         //instructions.draw(graphicsHandler);
+    }
+
+    private void drawVictoryScreen(GraphicsHandler graphicsHandler) {
+        int screenWidth = ScreenManager.getScreenWidth();
+        int screenHeight = ScreenManager.getScreenHeight();
+        graphicsHandler.drawFilledRectangle(0, 0, screenWidth, screenHeight, Color.black);
+
+        Graphics2D graphics = graphicsHandler.getGraphics();
+        Font titleFont = new Font("Arial", Font.BOLD, 48);
+        Font promptFont = new Font("Arial", Font.PLAIN, 24);
+        FontMetrics titleMetrics = graphics.getFontMetrics(titleFont);
+        FontMetrics promptMetrics = graphics.getFontMetrics(promptFont);
+
+        String title = "You Win";
+        String prompt = "Press Enter to return to overworld";
+        graphicsHandler.drawString(title, (screenWidth - titleMetrics.stringWidth(title)) / 2,
+                screenHeight / 2, titleFont, Color.green);
+        graphicsHandler.drawString(prompt, (screenWidth - promptMetrics.stringWidth(prompt)) / 2,
+                screenHeight / 2 + 50, promptFont, Color.white);
+    }
+
+    private void drawLoseScreen(GraphicsHandler graphicsHandler) {
+        int screenWidth = ScreenManager.getScreenWidth();
+        int screenHeight = ScreenManager.getScreenHeight();
+        graphicsHandler.drawFilledRectangle(0, 0, screenWidth, screenHeight, Color.black);
+
+        Graphics2D graphics = graphicsHandler.getGraphics();
+        Font titleFont = new Font("Arial", Font.BOLD, 48);
+        Font promptFont = new Font("Arial", Font.PLAIN, 24);
+        FontMetrics titleMetrics = graphics.getFontMetrics(titleFont);
+        FontMetrics promptMetrics = graphics.getFontMetrics(promptFont);
+
+        String title = "You Lose";
+        String prompt = "Press Enter to return to overworld";
+        graphicsHandler.drawString(title, (screenWidth - titleMetrics.stringWidth(title)) / 2,
+                screenHeight / 2, titleFont, Color.red);
+        graphicsHandler.drawString(prompt, (screenWidth - promptMetrics.stringWidth(prompt)) / 2,
+                screenHeight / 2 + 50, promptFont, Color.white);
     }
 }
