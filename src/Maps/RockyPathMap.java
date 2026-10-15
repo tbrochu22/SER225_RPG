@@ -32,7 +32,10 @@ public class RockyPathMap extends Map {
 
         // flowers planted in a few of the grass patches scattered around the map
         int[][] flowerSpotsR = {
-                {17, 34}, {20, 15}, {17, 14}, {22, 27}, {23, 3}, {18, 7}, {21, 4}
+                // scattered along the path (none sit on the path itself)
+                {17, 34}, {20, 15}, {22, 27}, {23, 3}, {21, 4},
+                // flower field in the top-left grass
+                {1, 1}, {5, 1}, {2, 2}, {8, 2}, {3, 3}, {2, 4}, {12, 4}, {3, 5}, {6, 6}
         };
         for (int[] spot : flowerSpotsR) {
             Rflower flower = new Rflower(getMapTile(spot[0], spot[1]).getLocation());
@@ -40,7 +43,9 @@ public class RockyPathMap extends Map {
         }
 
         int[][] flowerSpotsY = {
-                {20, 5}, {30 , 2}, {30, 4}, {27, 35}
+                {30, 2}, {30, 4},
+                // flower field in the top-left grass
+                {3, 1}, {11, 1}, {6, 2}, {12, 2}, {7, 3}, {8, 4}, {1, 5}, {7, 5}, {10, 6}
         };
         for (int[] spot : flowerSpotsY) {
             Flower flower = new Flower(getMapTile(spot[0], spot[1]).getLocation());
@@ -59,13 +64,13 @@ public class RockyPathMap extends Map {
         mage.setInteractScript(new MageScript());
         npcs.add(mage);
 
-        // archer says hi partway down the path
-        Archer archer = new Archer(2, getMapTile(11, 20).getLocation());
+        // archer says hi partway down the path, standing just right of it
+        Archer archer = new Archer(2, getMapTile(25, 20).getLocation());
         archer.setInteractScript(new ArcherScript());
         npcs.add(archer);
 
         // boss waits near the end of the path
-        Boss1 boss1 = new Boss1(3, getMapTile(8, 37).getLocation());
+        Boss1 boss1 = new Boss1(3, getMapTile(25, 37).getLocation());
         boss1.setInteractScript(new Boss1Script());
         npcs.add(boss1);
 

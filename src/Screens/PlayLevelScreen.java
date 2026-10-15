@@ -7,6 +7,8 @@ import Game.GameState;
 import Game.ScreenCoordinator;
 import Level.*;
 import Maps.RockyPathMap;
+import Maps.SecondMap;
+import Music.MusicPlayer;
 import Maps.TestMap;
 import Players.Knight;
 import Utils.Direction;
@@ -49,6 +51,7 @@ public class PlayLevelScreen extends Screen implements GameListener {
         flagManager.addFlag("hasTalkedToWalrus", false);
         flagManager.addFlag("hasTalkedToDinosaur", false);
         flagManager.addFlag("hasFoundBall", false);
+        flagManager.addFlag("hasBeatenBoss1", false);
 
         // define/setup map
         map = new RockyPathMap();
@@ -100,6 +103,7 @@ public class PlayLevelScreen extends Screen implements GameListener {
                 if (playLevelScreenState == PlayLevelScreenState.RUNNING) {
                     map.update(player);
                     encounterChance();
+                    checkForMapExit();
                 }
                 break;
             // if level has been completed, bring up level cleared screen
@@ -167,8 +171,67 @@ public class PlayLevelScreen extends Screen implements GameListener {
     }
 
     public void endCutaway() {
+        // the real boss fight isn't built yet, so for now leaving the cutaway screen counts as beating Boss1
+        // TODO: once the fight exists, only call this when the player actually wins
+        onBoss1Defeated();
         // returns control back to the map/player once the cutaway screen is dismissed
         playLevelScreenState = PlayLevelScreenState.RUNNING;
+    }
+
+    // exit at the bottom of the rocky path -- these tiles start as boulders in Rocky_path_map.txt
+    private static final int EXIT_ROW = 39;
+    private static final int EXIT_START_X = 27;
+    private static final int EXIT_END_X = 29;
+
+    // marks Boss1 as beaten and clears the boulders blocking the end of the path
+    public void onBoss1Defeated() {
+        if (flagManager.isFlagSet("hasBeatenBoss1")) {
+            return;
+        }
+        flagManager.setFlag("hasBeatenBoss1");
+        if (map instanceof RockyPathMap) {
+            for (int x = EXIT_START_X; x <= EXIT_END_X; x++) {
+                Point location = map.getMapTile(x, EXIT_ROW).getLocation();
+                // tile index 1 in RockyTileset is the dirt path (passable)
+                MapTile pathTile = map.getTileset().getTile(1).build(location.x, location.y);
+                map.setMapTile(x, EXIT_ROW, pathTile);
+            }
+        }
+    }
+
+    // once the boulders are gone, walking to the end of the path transports the player to the next map
+    private void checkForMapExit() {
+        if (!(map instanceof RockyPathMap) || !flagManager.isFlagSet("hasBeatenBoss1")) {
+            return;
+        }
+        Point currentTile = map.getTileIndexByPosition(player.getX(), player.getY());
+        // row 38 also counts so the player doesn't have to squeeze fully into the bottom row
+        if (currentTile.y >= EXIT_ROW - 1 && currentTile.x >= EXIT_START_X && currentTile.x <= EXIT_END_X) {
+            loadMap(new SecondMap());
+        }
+    }
+
+    // swaps in a new map and moves the player to its start position, keeping flags and player state
+    public void loadMap(Map newMap) {
+        map = newMap;
+        map.setFlagManager(flagManager);
+
+        player.setMap(map);
+        player.setLocation(map.getPlayerStartPosition().x, map.getPlayerStartPosition().y);
+        player.setFacingDirection(Direction.DOWN);
+        map.setPlayer(player);
+
+        map.getTextbox().setInteractKey(player.getInteractKey());
+        map.addListener(this);
+        map.preloadScripts();
+
+        flowers.clear();
+        for (EnhancedMapTile tile : map.getEnhancedMapTiles()) {
+            if (tile instanceof Rflower) {
+                flowers.add((Rflower) tile);
+            }
+        }
+        lastTile = map.getTileIndexByPosition(player.getX(), player.getY());
     }
 
     @Override
