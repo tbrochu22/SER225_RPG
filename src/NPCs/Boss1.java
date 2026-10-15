@@ -16,7 +16,7 @@ import java.util.HashMap;
 public class Boss1 extends NPC {
 
     public Boss1(int id, Point location) {
-        super(id, location.x, location.y, new SpriteSheet(ImageLoader.load("Boss1.png"), 24, 24), "STAND_LEFT");
+        super(id, location.x, location.y, new SpriteSheet(ImageLoader.load("Boss1.png"), 24, 24), "STAND_RIGHT"); // faces right, toward the path
     }
 
     @Override
