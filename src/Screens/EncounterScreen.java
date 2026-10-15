@@ -4,10 +4,16 @@ import Battle.Grab;
 import Battle.Kick;
 import Battle.Move;
 import Battle.Punch;
+import Battle.Scratch;
 import Battle.Tackle;
+import Battle.electricBite;
+import Battle.Bite;
+import Battle.Roar;
 import Engine.*;
 import SpriteFont.SpriteFont;
 import java.awt.*;
+import java.util.Random;
+import java.awt.image.BufferedImage;
 
 // This class is for the encounter screen
 public class EncounterScreen extends Screen {
@@ -28,12 +34,17 @@ public class EncounterScreen extends Screen {
     protected SpriteFont enemyLabel;
     protected SpriteFont[] buttonLabels = new SpriteFont[4];
     protected Move[] moves = { new Tackle(), new Punch(), new Kick(), new Grab()};
+    protected Move[] enemyMoves = { new Roar(), new Bite(), new electricBite(), new Scratch()};
     protected int textBoxTimer;
     protected SpriteFont moveInfoText;
+    protected Random random = new Random();
+    protected BufferedImage knightBack;
+    protected BufferedImage enemySprite;
 
     public EncounterScreen(PlayLevelScreen playLevelScreen) {
         this.playLevelScreen = playLevelScreen;
         initialize();
+        knightBack = ImageLoader.load("KnightBack.png");
     }
 
     public void setMonsterName(String mName){
@@ -125,6 +136,10 @@ public class EncounterScreen extends Screen {
             keyLocker.lockKey(Key.SPACE);
             moveInfoText.setText("Name: " + moves[battleMenuItemSelected].getName() + "\nType: " + moves[battleMenuItemSelected].getType() + "\nPower: " + moves[battleMenuItemSelected].getPower() + "\nAccuracy: " + moves[battleMenuItemSelected].getAccuracy());
             textBoxTimer = 240;
+
+            int i = random.nextInt(enemyMoves.length);
+            Move enemyMove = enemyMoves[i];
+            System.out.println(enemyMove.getName());
         }
         //to make the text box disappear after a set time
         if(textBoxTimer > 0){
@@ -164,8 +179,13 @@ public class EncounterScreen extends Screen {
         graphicsHandler.drawFilledRectangle(10, barHeight, playerFill, 14, new Color(120, 230, 70));
         playerLabel.draw(graphicsHandler);
         enemyLabel.draw(graphicsHandler);
-        playerPlaceholder.draw(graphicsHandler);
+        //playerPlaceholder.draw(graphicsHandler);
+        graphicsHandler.drawImage(knightBack, 115, 315, 160, 160);
+        if(enemySprite != null){
+        graphicsHandler.drawImage(enemySprite, 500, 100, 192, 192);
+        }else{
         enemyPlaceholder.draw(graphicsHandler);
+        }
         //for the buttons
         for(int row = 0; row < 2; row ++){
             for(int col = 0; col < 2; col ++){

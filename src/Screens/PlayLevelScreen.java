@@ -13,6 +13,12 @@ import Utils.Direction;
 
 import java.util.ArrayList;
 import java.util.Random;
+
+import Battle.Bite;
+import Battle.Move;
+import Battle.Roar;
+import Battle.Scratch;
+import Battle.electricBite;
 import Utils.Point;
 
 // This class is for when the RPG game is actually being played
@@ -30,6 +36,7 @@ public class PlayLevelScreen extends Screen implements GameListener {
     protected java.util.Random random;
     protected Utils.Point lastTile;
     protected ArrayList<Rflower> flowers;
+    protected BossScreen sparkWolfScreen, clawBearScreen;
 
     public PlayLevelScreen(ScreenCoordinator screenCoordinator) {
         this.screenCoordinator = screenCoordinator;
@@ -74,6 +81,9 @@ public class PlayLevelScreen extends Screen implements GameListener {
 
         winScreen = new WinScreen(this);
         encounterScreen = new EncounterScreen(this);
+
+        sparkWolfScreen = new BossScreen(this, "Spark Wolf", "SparkWolf.png", new Move[] {new electricBite(), new Roar(), new Bite(), new Scratch()});
+        clawBearScreen = new BossScreen(this, "Claw Bear", "ClawBear.png", new Move[] {new Scratch(), new Roar(), new Bite(), new Scratch()});
         lastTile = map.getTileIndexByPosition(player.getX(), player.getY());
         random = new Random();
         monsterNameStrings = new String[] {"Monster x", "Monster y", "Monster z"};
