@@ -1,6 +1,7 @@
 package EnhancedMapTiles;
 
 import Builders.FrameBuilder;
+import Engine.GraphicsHandler;
 import Engine.ImageLoader;
 import GameObject.Frame;
 import GameObject.GameObject;
@@ -12,6 +13,7 @@ import Utils.Point;
 
 public class Flower extends EnhancedMapTile {
 
+    private boolean visible = true;
     private boolean triggered = false;
     private boolean used = false;
 
@@ -32,8 +34,17 @@ public class Flower extends EnhancedMapTile {
             triggered = true;
             used = true;
         }
+        if(visible && touching(player)){
+            visible = false;
+        }
     }
 
+    @Override 
+     public void drawBottomLayer(GraphicsHandler graphicsHandler) {
+        if (visible) {
+            super.drawBottomLayer(graphicsHandler);
+        }
+    }
     public boolean consumeTrigger() {
         if (triggered) {
             triggered = false;
