@@ -1,7 +1,11 @@
 package Maps;
 
-import EnhancedMapTiles.Rflower;
+import EnhancedMapTiles.Cookie;
+import EnhancedMapTiles.Deodorant;
 import EnhancedMapTiles.Flower;
+import EnhancedMapTiles.GlassEye;
+import EnhancedMapTiles.Rflower;
+import EnhancedMapTiles.ToyTrain;
 import Level.EnhancedMapTile;
 import Level.Map;
 import Level.NPC;
@@ -10,10 +14,13 @@ import NPCs.Archer;
 import NPCs.Boss1;
 import NPCs.Mage;
 import Scripts.TestMap.ArcherScript;
-import Scripts.TestMap.MageScript;
 import Scripts.TestMap.Boss1Script;
+import Scripts.TestMap.CookieScript;
+import Scripts.TestMap.DeodorantScript;
+import Scripts.TestMap.GlassEyeScript;
+import Scripts.TestMap.MageScript;
+import Scripts.TestMap.ToyTrainScript;
 import Tilesets.RockyTileset;
-
 import java.util.ArrayList;
 
 // A rocky outdoor map with a winding dirt path cutting through it, bordered by cliff walls.
@@ -51,6 +58,23 @@ public class RockyPathMap extends Map {
             Flower flower = new Flower(getMapTile(spot[0], spot[1]).getLocation());
             enhancedMapTiles.add(flower);
         }
+
+        GlassEye glassEye = new GlassEye(getMapTile(13, 13).getLocation());
+        glassEye.setInteractScript(new GlassEyeScript());
+        enhancedMapTiles.add(glassEye);
+
+        Cookie cookie = new Cookie(getMapTile(20, 21).getLocation());
+        cookie.setInteractScript(new CookieScript());
+        enhancedMapTiles.add(cookie);
+
+        Deodorant deodorant = new Deodorant(getMapTile(29, 29).getLocation());
+        deodorant.setInteractScript(new DeodorantScript());
+        enhancedMapTiles.add(deodorant);
+
+        ToyTrain toyTrain = new ToyTrain(getMapTile(3, 30).getLocation());
+        toyTrain.setInteractScript(new ToyTrainScript());
+        enhancedMapTiles.add(toyTrain);
+
 
         return enhancedMapTiles;
     }

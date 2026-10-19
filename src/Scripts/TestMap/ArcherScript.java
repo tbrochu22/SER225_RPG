@@ -1,13 +1,12 @@
 package Scripts.TestMap;
 
-import java.util.ArrayList;
-
 import Level.Script;
 import ScriptActions.LockPlayerScriptAction;
 import ScriptActions.NPCFacePlayerScriptAction;
 import ScriptActions.ScriptAction;
 import ScriptActions.TextboxScriptAction;
 import ScriptActions.UnlockPlayerScriptAction;
+import java.util.ArrayList;
 
 // script for talking to the archer npc, placed partway down the rocky path
 public class ArcherScript extends Script {
