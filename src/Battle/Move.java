@@ -3,12 +3,14 @@ package Battle;
 public class Move {
     protected String name;
     protected int power;
+    protected int effect;
     protected int accuracy;
     protected String type;
 
-    public Move(String name, int power, int accuracy, String type){
+    public Move(String name, int power, int effect, int accuracy, String type){
         this.name = name;
         this.power = power;
+        this.effect = effect;
         this.accuracy = accuracy;
         this.type = type;
     }
@@ -18,6 +20,9 @@ public class Move {
     }
     public int getPower(){
         return power;
+    }
+    public int getEffect(){
+        return effect;
     }
     public int getAccuracy(){
         return accuracy;

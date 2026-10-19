@@ -1,7 +1,7 @@
 package Screens;
 
-import Battle.Grab;
-import Battle.Kick;
+import Battle.Recover;
+import Battle.Vigor;
 import Battle.Move;
 import Battle.Punch;
 import Battle.Scratch;
@@ -17,6 +17,8 @@ import java.awt.image.BufferedImage;
 
 // This class is for the encounter screen
 public class EncounterScreen extends Screen {
+    private static final int RESULT_SCREEN_DELAY = 3 * Config.TARGET_FPS;
+
     protected SpriteFont encounterMessage;
     protected SpriteFont instructions;
     protected KeyLocker keyLocker = new KeyLocker();
@@ -30,10 +32,13 @@ public class EncounterScreen extends Screen {
     protected SpriteFont playerPlaceholder;
     protected SpriteFont enemyPlaceholder;
     protected int enemyHp, enemyMaxHp, playerHp, playerMaxHp;
+    protected int damageRoll = 0;
+    protected int defenseBuff = 0;
+    protected int resultScreenTimer;
     protected SpriteFont playerLabel;
     protected SpriteFont enemyLabel;
     protected SpriteFont[] buttonLabels = new SpriteFont[4];
-    protected Move[] moves = { new Tackle(), new Punch(), new Kick(), new Grab()};
+    protected Move[] moves = { new Tackle(), new Punch(), new Vigor(), new Recover()};
     protected Move[] enemyMoves = { new Roar(), new Bite(), new electricBite(), new Scratch()};
     protected int textBoxTimer;
     protected int enemyTurnDelay;
@@ -61,12 +66,50 @@ public class EncounterScreen extends Screen {
         }
 
         if (playerAttacking) {
-            enemyHp = Math.max(0, enemyHp - move.getPower());
+            if (move.getPower() > 0) {
+                damageRoll = (int)(Math.random() * 20) - 10;
+                enemyHp = Math.max(0, enemyHp - (move.getPower() + damageRoll));
+                damageRoll = 0;
+            } else {
+                if (move.getType().equals("Defense Buff")) {
+                    defenseBuff += move.getEffect();
+                } else if (move.getType().equals("Healing")) {
+                    playerHp = Math.min(playerMaxHp, playerHp + move.getEffect());
+                }
+            }
         } else {
-            playerHp = Math.max(0, playerHp - move.getPower());
+            if (move.getPower() > 0) {
+                damageRoll = (int)(Math.random() * 20) - 10;
+                playerHp = Math.max(0, playerHp - ((move.getPower() + damageRoll) - defenseBuff));
+                damageRoll = 0;
+            } else {
+                if (move.getType().equals("Defense Buff")) {
+                    defenseBuff += move.getEffect();
+                } else if (move.getType().equals("Healing")) {
+                    enemyHp = Math.min(enemyMaxHp, enemyHp + move.getEffect());
+                }
+            }
         }
 
-        return move.getName() + " hit for " + move.getPower() + " damage!";
+        if (move.getPower() > 0 && playerAttacking) {
+            return move.getName() + " hit for " + ((move.getPower() + damageRoll)) + " damage!";
+        }
+
+        if (move.getPower() > 0 && !playerAttacking) {
+            if (((move.getPower() + damageRoll) - defenseBuff) < 0) {
+                return move.getName() + " hit for 1 damage!";
+            }
+            
+            return move.getName() + " hit for " + ((move.getPower() + damageRoll) - defenseBuff) + " damage!";
+        }
+
+        if (move.getType().equals("Defense Buff")) {
+            return move.getName() + " increased your defense by " + move.getEffect() + "!";
+        }
+        if (move.getType().equals("Healing")) {
+            return move.getName() + " restored " + Math.abs(move.getEffect()) + " HP!";
+        }
+        return move.getName() + " had no effect!";
     }
 
     @Override
@@ -94,6 +137,7 @@ public class EncounterScreen extends Screen {
         enemyMaxHp = 100;
         playerHp = 100;
         playerMaxHp = 100; 
+        resultScreenTimer = 0;
         for(int row = 0; row < 2; row ++){
             for(int col = 0; col < 2; col ++){
                 int bx = 440 + col * 160;
@@ -112,10 +156,15 @@ public class EncounterScreen extends Screen {
         if (Keyboard.isKeyUp(Key.ENTER)) {
             keyLocker.unlockKey(Key.ENTER);
         }
-        if (enemyHp <= 0) {
+        if (enemyHp <= 0 || playerHp <= 0) {
+            if (resultScreenTimer > 0) {
+                keyLocker.lockKey(Key.ENTER);
+                resultScreenTimer--;
+                return;
+            }
             if (Keyboard.isKeyDown(Key.ENTER) && !keyLocker.isKeyLocked(Key.ENTER)) {
                 keyLocker.lockKey(Key.ENTER);
-                playLevelScreen.returnFromEncounter();
+                playLevelScreen.returnFromEncounter(playerHp <= 0);
             }
             return;
         }
@@ -127,6 +176,10 @@ public class EncounterScreen extends Screen {
                 battleMessage += "\n" + useMove(enemyMove, false);
                 moveInfoText.setText(battleMessage);
                 textBoxTimer = 240;
+                startResultScreenDelay();
+                if (playerHp <= 0) {
+                    return;
+                }
             }
         }
 
@@ -162,10 +215,7 @@ public class EncounterScreen extends Screen {
             battleCurrentMenuItemX = 1;
             keyLocker.lockKey(Key.D);
         }
-        // Allow the player to leave an unfinished encounter.
-        if (Keyboard.isKeyDown(Key.ENTER) && !keyLocker.isKeyLocked(Key.ENTER)) {
-            playLevelScreen.returnFromEncounter();
-        }
+
         if(Keyboard.isKeyUp(Key.SPACE)){
             keyLocker.unlockKey(Key.SPACE);
         }
@@ -181,6 +231,10 @@ public class EncounterScreen extends Screen {
 
                 moveInfoText.setText(battleMessage);
                 textBoxTimer = 240;
+                startResultScreenDelay();
+                if (enemyHp <= 0) {
+                    return;
+                }
             }
         }
         //to make the text box disappear after a set time
@@ -192,13 +246,23 @@ public class EncounterScreen extends Screen {
             }
     }
 
+    private void startResultScreenDelay() {
+        if (enemyHp <= 0 || playerHp <= 0) {
+            resultScreenTimer = RESULT_SCREEN_DELAY;
+            battleMessage = enemyHp <= 0
+                    ? "The enemy has been defeated!"
+                    : "The player has been defeated!";
+            moveInfoText.setText(battleMessage);
+        }
+    }
+
     public void draw(GraphicsHandler graphicsHandler) {
-        if (enemyHp <= 0) {
+        if (enemyHp <= 0 && resultScreenTimer <= 0) {
             drawVictoryScreen(graphicsHandler);
             return;
         }
 
-        if (playerHp <= 0) {
+        if (playerHp <= 0 && resultScreenTimer <= 0) {
             drawLoseScreen(graphicsHandler);
             return;
         }
@@ -251,7 +315,7 @@ public class EncounterScreen extends Screen {
                 buttonLabels[row * 2 + col].draw(graphicsHandler);
             }
         }
-        if(battleMenuItemSelected != -1){
+        if(battleMenuItemSelected != -1 || resultScreenTimer > 0){
             graphicsHandler.drawFilledRectangleWithBorder(20, 395, 400, 125, new Color(30,30,60), Color.white, 3);
             moveInfoText.drawWithParsedNewLines(graphicsHandler, 6);
         }

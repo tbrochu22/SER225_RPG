@@ -249,7 +249,13 @@ public class PlayLevelScreen extends Screen implements GameListener {
         RUNNING, LEVEL_COMPLETED, ENCOUNTER, CUTAWAY, SWAP_MOVES
     }
 
-    public void returnFromEncounter(){
+    public void returnFromEncounter(boolean playerLost){
+        if (playerLost) {
+            Point startPosition = map.getPlayerStartPosition();
+            player.setLocation(startPosition.x, startPosition.y);
+            player.setFacingDirection(Direction.DOWN);
+            lastTile = map.getTileIndexByPosition(player.getX(), player.getY());
+        }
         playLevelScreenState = PlayLevelScreenState.RUNNING;
     }
     public void encounterChance(){
