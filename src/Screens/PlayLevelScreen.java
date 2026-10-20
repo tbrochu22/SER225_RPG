@@ -138,7 +138,7 @@ public class PlayLevelScreen extends Screen implements GameListener {
         // when this method is called within the game, it signals that a boss fight has been triggered
         startBossFight(slimeBossScreen);
         MusicPlayer.playMusic("src/music/battle-music.wav");
-        playLevelScreenState = PlayLevelScreenState.CUTAWAY;
+        //playLevelScreenState = PlayLevelScreenState.CUTAWAY;
     }
 
     public void draw(GraphicsHandler graphicsHandler) {
