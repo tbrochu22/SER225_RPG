@@ -1,5 +1,10 @@
 package Screens;
 
+import Battle.Bite;
+import Battle.Move;
+import Battle.Roar;
+import Battle.Scratch;
+import Battle.electricBite;
 import Engine.GraphicsHandler;
 import Engine.Screen;
 import EnhancedMapTiles.Rflower;
@@ -9,19 +14,11 @@ import Level.*;
 import Maps.RockyPathMap;
 import Maps.SecondMap;
 import Music.MusicPlayer;
-import Maps.TestMap;
 import Players.Knight;
 import Utils.Direction;
-
+import Utils.Point;
 import java.util.ArrayList;
 import java.util.Random;
-
-import Battle.Bite;
-import Battle.Move;
-import Battle.Roar;
-import Battle.Scratch;
-import Battle.electricBite;
-import Utils.Point;
 
 // This class is for when the RPG game is actually being played
 public class PlayLevelScreen extends Screen implements GameListener {
@@ -140,6 +137,8 @@ public class PlayLevelScreen extends Screen implements GameListener {
     public void onFight() {
         // when this method is called within the game, it signals that a boss fight has been triggered
         startBossFight(slimeBossScreen);
+        MusicPlayer.playMusic("src/music/battle-music.wav");
+        playLevelScreenState = PlayLevelScreenState.CUTAWAY;
     }
 
     public void draw(GraphicsHandler graphicsHandler) {
@@ -180,6 +179,7 @@ public class PlayLevelScreen extends Screen implements GameListener {
         // TODO: once the fight exists, only call this when the player actually wins
         onBoss1Defeated();
         // returns control back to the map/player once the cutaway screen is dismissed
+        MusicPlayer.playMusic("src/music/Inductance.wav");
         playLevelScreenState = PlayLevelScreenState.RUNNING;
     }
 
@@ -254,8 +254,16 @@ public class PlayLevelScreen extends Screen implements GameListener {
         RUNNING, LEVEL_COMPLETED, ENCOUNTER, CUTAWAY, SWAP_MOVES
     }
 
-    public void returnFromEncounter(){
+    public void returnFromEncounter(boolean playerLost){
+        if (playerLost) {
+            Point startPosition = map.getPlayerStartPosition();
+            player.setLocation(startPosition.x, startPosition.y);
+            player.setFacingDirection(Direction.DOWN);
+            lastTile = map.getTileIndexByPosition(player.getX(), player.getY());
+        }
+        MusicPlayer.playMusic("src/music/Inductance.wav");
         playLevelScreenState = PlayLevelScreenState.RUNNING;
+
     }
     public void startBossFight(BossScreen boss) {
     currentFight = boss;
@@ -271,6 +279,9 @@ public class PlayLevelScreen extends Screen implements GameListener {
                 if (currentTile.x != lastTile.x || currentTile.y != lastTile.y) {
                     if(random.nextFloat() <= 1f){
                     startBossFight(randomBosses[random.nextInt(randomBosses.length)]);
+                    encounterScreen.setMonsterName(monsterNameStrings[random.nextInt(monsterNameStrings.length)]);
+                    MusicPlayer.playMusic("src/music/battle-music.wav");
+                    playLevelScreenState = PlayLevelScreenState.ENCOUNTER;
                     }
                 }
             }
