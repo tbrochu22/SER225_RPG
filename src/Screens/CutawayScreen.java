@@ -166,7 +166,8 @@ public class CutawayScreen extends Screen {
             }
             if (Keyboard.isKeyDown(Key.ENTER) && !keyLocker.isKeyLocked(Key.ENTER)) {
                 keyLocker.lockKey(Key.ENTER);
-                playLevelScreen.returnFromEncounter(playerHp <= 0);
+                // tells the level screen whether Boss1 was beaten, so it can open the path exit
+                playLevelScreen.returnFromBossFight(playerHp <= 0);
             }
             return;
         }

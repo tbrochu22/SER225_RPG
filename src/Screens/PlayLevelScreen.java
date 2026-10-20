@@ -37,6 +37,13 @@ public class PlayLevelScreen extends Screen implements GameListener {
     protected ArrayList<Rflower> flowers;
     protected BossScreen sparkWolfScreen, clawBearScreen;
 
+    // each map is only built once and then reused, so going back to a map keeps its state
+    // (flowers already touched, items already picked up, boulders already cleared, etc.)
+    protected RockyPathMap rockyPathMap;
+    protected SecondMap secondMap;
+    // which boss the current/last boss fight is against (1 = slime on the rocky path, 2 = octopus in the desert)
+    protected int currentBoss;
+
     public PlayLevelScreen(ScreenCoordinator screenCoordinator) {
         this.screenCoordinator = screenCoordinator;
     }
@@ -49,9 +56,12 @@ public class PlayLevelScreen extends Screen implements GameListener {
         flagManager.addFlag("hasTalkedToDinosaur", false);
         flagManager.addFlag("hasFoundBall", false);
         flagManager.addFlag("hasBeatenBoss1", false);
+        flagManager.addFlag("hasBeatenBoss2", false);
 
         // define/setup map
-        map = new RockyPathMap();
+        rockyPathMap = new RockyPathMap();
+        secondMap = null;
+        map = rockyPathMap;
         map.setFlagManager(flagManager);
         flowers = new ArrayList<>();
         for(EnhancedMapTile tile: map.getEnhancedMapTiles()){
@@ -132,6 +142,10 @@ public class PlayLevelScreen extends Screen implements GameListener {
     public void onFight() {
         // when this method is called within the game, it signals that a boss fight has been triggered
         MusicPlayer.playMusic("src/music/battle-music.wav");
+        // reset HP/menus so a rematch (after losing) starts fresh instead of reusing the last fight's state
+        cutawayScreen.initialize();
+        // each map has one boss, so the current map tells us which boss was talked to
+        currentBoss = (map == secondMap) ? 2 : 1;
         playLevelScreenState = PlayLevelScreenState.CUTAWAY;
     }
 
@@ -168,61 +182,110 @@ public class PlayLevelScreen extends Screen implements GameListener {
         screenCoordinator.setGameState(GameState.MENU);
     }
 
+    // called by CutawayScreen when the Boss1 fight is over
+    // winning clears the boulders at the end of the rocky path; losing sends the player back to the map start like a normal encounter
+    public void returnFromBossFight(boolean playerLost) {
+        if (!playerLost) {
+            if (currentBoss == 1) {
+                onBoss1Defeated();
+            } else if (currentBoss == 2) {
+                flagManager.setFlag("hasBeatenBoss2");
+            }
+        }
+        returnFromEncounter(playerLost);
+    }
+
     public void endCutaway() {
-        // the real boss fight isn't built yet, so for now leaving the cutaway screen counts as beating Boss1
-        // TODO: once the fight exists, only call this when the player actually wins
-        onBoss1Defeated();
         // returns control back to the map/player once the cutaway screen is dismissed
         MusicPlayer.playMusic("src/music/Inductance.wav");
         playLevelScreenState = PlayLevelScreenState.RUNNING;
     }
 
-    // exit at the bottom of the rocky path -- these tiles start as boulders in Rocky_path_map.txt
-    private static final int EXIT_ROW = 39;
-    private static final int EXIT_START_X = 27;
-    private static final int EXIT_END_X = 29;
+    // ---------------- map transitions ----------------
+
+    // rocky path exit: bottom of the path, these tiles start as boulders in Rocky_path_map.txt
+    private static final int ROCKY_EXIT_ROW = 39;
+    private static final int ROCKY_EXIT_START_X = 27;
+    private static final int ROCKY_EXIT_END_X = 29;
+    // where the player lands on the rocky path when coming back from the desert (just above the exit)
+    private static final int ROCKY_RETURN_X = 28;
+    private static final int ROCKY_RETURN_Y = 37;
+
+    // desert exit: the opening in the top wall of second_map.txt
+    private static final int DESERT_EXIT_ROW = 0;
+    private static final int DESERT_EXIT_START_X = 9;
+    private static final int DESERT_EXIT_END_X = 10;
+    // where the player lands in the desert when coming from the rocky path (just below the opening)
+    private static final int DESERT_ARRIVAL_X = 9;
+    private static final int DESERT_ARRIVAL_Y = 1;
 
     // marks Boss1 as beaten and clears the boulders blocking the end of the path
     public void onBoss1Defeated() {
-        if (flagManager.isFlagSet("hasBeatenBoss1")) {
-            return;
+        if (!flagManager.isFlagSet("hasBeatenBoss1")) {
+            flagManager.setFlag("hasBeatenBoss1");
         }
-        flagManager.setFlag("hasBeatenBoss1");
-        if (map instanceof RockyPathMap) {
-            for (int x = EXIT_START_X; x <= EXIT_END_X; x++) {
-                Point location = map.getMapTile(x, EXIT_ROW).getLocation();
-                // tile index 1 in RockyTileset is the dirt path (passable)
-                MapTile pathTile = map.getTileset().getTile(1).build(location.x, location.y);
-                map.setMapTile(x, EXIT_ROW, pathTile);
+        openRockyPathExit();
+    }
+
+    // swaps the exit boulders on the rocky path for dirt path tiles (safe to call more than once)
+    private void openRockyPathExit() {
+        for (int x = ROCKY_EXIT_START_X; x <= ROCKY_EXIT_END_X; x++) {
+            Point location = rockyPathMap.getMapTile(x, ROCKY_EXIT_ROW).getLocation();
+            // tile index 1 in RockyTileset is the dirt path (passable)
+            MapTile pathTile = rockyPathMap.getTileset().getTile(1).build(location.x, location.y);
+            rockyPathMap.setMapTile(x, ROCKY_EXIT_ROW, pathTile);
+        }
+    }
+
+    // checks every frame whether the player is standing in a map's exit, and if so moves them to the connected map
+    private void checkForMapExit() {
+        Point currentTile = map.getTileIndexByPosition(player.getX(), player.getY());
+
+        if (map == rockyPathMap) {
+            // exit only works once Boss1 is beaten (before that it's blocked by boulders anyway)
+            // row 38 also counts so the player doesn't have to squeeze fully into the bottom row
+            if (flagManager.isFlagSet("hasBeatenBoss1")
+                    && currentTile.y >= ROCKY_EXIT_ROW - 1
+                    && currentTile.x >= ROCKY_EXIT_START_X && currentTile.x <= ROCKY_EXIT_END_X) {
+                if (secondMap == null) {
+                    secondMap = new SecondMap();
+                }
+                loadMap(secondMap, DESERT_ARRIVAL_X, DESERT_ARRIVAL_Y, Direction.DOWN);
+            }
+        } else if (map == secondMap) {
+            // walking back up through the opening in the top wall returns to the rocky path
+            if (currentTile.y <= DESERT_EXIT_ROW
+                    && currentTile.x >= DESERT_EXIT_START_X && currentTile.x <= DESERT_EXIT_END_X) {
+                loadMap(rockyPathMap, ROCKY_RETURN_X, ROCKY_RETURN_Y, Direction.UP);
             }
         }
     }
 
-    // once the boulders are gone, walking to the end of the path transports the player to the next map
-    private void checkForMapExit() {
-        if (!(map instanceof RockyPathMap) || !flagManager.isFlagSet("hasBeatenBoss1")) {
-            return;
-        }
-        Point currentTile = map.getTileIndexByPosition(player.getX(), player.getY());
-        // row 38 also counts so the player doesn't have to squeeze fully into the bottom row
-        if (currentTile.y >= EXIT_ROW - 1 && currentTile.x >= EXIT_START_X && currentTile.x <= EXIT_END_X) {
-            loadMap(new SecondMap());
-        }
-    }
+    // swaps in another map and places the player on the given tile, keeping flags and player state
+    // the arrival tile must be OUTSIDE that map's exit area, otherwise the player would bounce straight back
+    public void loadMap(Map newMap, int tileX, int tileY, Direction facing) {
+        boolean firstVisit = newMap.getPlayer() == null;
 
-    // swaps in a new map and moves the player to its start position, keeping flags and player state
-    public void loadMap(Map newMap) {
         map = newMap;
         map.setFlagManager(flagManager);
 
         player.setMap(map);
-        player.setLocation(map.getPlayerStartPosition().x, map.getPlayerStartPosition().y);
-        player.setFacingDirection(Direction.DOWN);
+        Point arrival = map.getMapTile(tileX, tileY).getLocation();
+        player.setLocation(arrival.x, arrival.y);
+        player.setFacingDirection(facing);
         map.setPlayer(player);
 
-        map.getTextbox().setInteractKey(player.getInteractKey());
-        map.addListener(this);
-        map.preloadScripts();
+        // only hook up listeners/scripts the first time a map is used, otherwise they'd be added twice
+        // and things like onFight() would fire twice
+        if (firstVisit) {
+            map.getTextbox().setInteractKey(player.getInteractKey());
+            map.addListener(this);
+            map.preloadScripts();
+        }
+
+        if (map == rockyPathMap && flagManager.isFlagSet("hasBeatenBoss1")) {
+            openRockyPathExit();
+        }
 
         flowers.clear();
         for (EnhancedMapTile tile : map.getEnhancedMapTiles()) {
