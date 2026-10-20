@@ -35,7 +35,9 @@ public class PlayLevelScreen extends Screen implements GameListener {
     protected java.util.Random random;
     protected Utils.Point lastTile;
     protected ArrayList<Rflower> flowers;
-    protected BossScreen sparkWolfScreen, clawBearScreen;
+    protected BossScreen sparkWolfScreen, clawBearScreen, shadowBatScreen, slimeBossScreen;
+    protected BossScreen[] randomBosses;
+    protected BossScreen currentFight;
 
     // each map is only built once and then reused, so going back to a map keeps its state
     // (flowers already touched, items already picked up, boulders already cleared, etc.)
@@ -94,6 +96,9 @@ public class PlayLevelScreen extends Screen implements GameListener {
 
         sparkWolfScreen = new BossScreen(this, "Spark Wolf", "SparkWolf.png", new Move[] {new electricBite(), new Roar(), new Bite(), new Scratch()});
         clawBearScreen = new BossScreen(this, "Claw Bear", "ClawBear.png", new Move[] {new Scratch(), new Roar(), new Bite(), new Scratch()});
+        shadowBatScreen = new BossScreen(this, "ShadowBat", "ShadowBat.png", new Move[] {new Scratch(), new Roar(), new Bite(), new Scratch()});
+        slimeBossScreen = new BossScreen(this, "Slimeboss", "SlimeBoss.png", new Move[] {new Scratch(), new Roar(), new Bite(), new Scratch()});
+        randomBosses = new BossScreen[] { sparkWolfScreen, clawBearScreen, shadowBatScreen };
         lastTile = map.getTileIndexByPosition(player.getX(), player.getY());
         random = new Random();
         monsterNameStrings = new String[] {"Monster x", "Monster y", "Monster z"};
@@ -118,7 +123,7 @@ public class PlayLevelScreen extends Screen implements GameListener {
                 winScreen.update();
                 break;
             case ENCOUNTER:
-                encounterScreen.update();
+                currentFight.update();
                 break;
             // if a fight has been triggered, bring up the cutaway screen
             case CUTAWAY:
@@ -141,6 +146,7 @@ public class PlayLevelScreen extends Screen implements GameListener {
     @Override
     public void onFight() {
         // when this method is called within the game, it signals that a boss fight has been triggered
+        startBossFight(slimeBossScreen);
         MusicPlayer.playMusic("src/music/battle-music.wav");
         // reset HP/menus so a rematch (after losing) starts fresh instead of reusing the last fight's state
         cutawayScreen.initialize();
@@ -159,7 +165,7 @@ public class PlayLevelScreen extends Screen implements GameListener {
                 winScreen.draw(graphicsHandler);
                 break;
             case ENCOUNTER:
-                encounterScreen.draw(graphicsHandler);
+                currentFight.draw(graphicsHandler);
             break;
             case CUTAWAY:
                 cutawayScreen.draw(graphicsHandler);
@@ -322,6 +328,11 @@ public class PlayLevelScreen extends Screen implements GameListener {
         playLevelScreenState = PlayLevelScreenState.RUNNING;
 
     }
+    public void startBossFight(BossScreen boss) {
+    currentFight = boss;
+    currentFight.startFight();
+    playLevelScreenState = PlayLevelScreenState.ENCOUNTER;
+    }
     public void encounterChance(){
         //essentially this chunk checks if the spot the player is now is different from the last time lastTile was saved
         Point currentTile = map.getTileIndexByPosition(player.getX(), player.getY());
@@ -330,6 +341,7 @@ public class PlayLevelScreen extends Screen implements GameListener {
             if(currentTile.x == flowerTile.x && currentTile.y == flowerTile.y){
                 if (currentTile.x != lastTile.x || currentTile.y != lastTile.y) {
                     if(random.nextFloat() <= 1f){
+                    startBossFight(randomBosses[random.nextInt(randomBosses.length)]);
                     encounterScreen.setMonsterName(monsterNameStrings[random.nextInt(monsterNameStrings.length)]);
                     MusicPlayer.playMusic("src/music/battle-music.wav");
                     playLevelScreenState = PlayLevelScreenState.ENCOUNTER;
