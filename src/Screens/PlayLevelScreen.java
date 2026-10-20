@@ -38,7 +38,9 @@ public class PlayLevelScreen extends Screen implements GameListener {
     protected java.util.Random random;
     protected Utils.Point lastTile;
     protected ArrayList<Rflower> flowers;
-    protected BossScreen sparkWolfScreen, clawBearScreen;
+    protected BossScreen sparkWolfScreen, clawBearScreen, shadowBatScreen, slimeBossScreen;
+    protected BossScreen[] randomBosses;
+    protected BossScreen currentFight;
 
     public PlayLevelScreen(ScreenCoordinator screenCoordinator) {
         this.screenCoordinator = screenCoordinator;
@@ -87,6 +89,9 @@ public class PlayLevelScreen extends Screen implements GameListener {
 
         sparkWolfScreen = new BossScreen(this, "Spark Wolf", "SparkWolf.png", new Move[] {new electricBite(), new Roar(), new Bite(), new Scratch()});
         clawBearScreen = new BossScreen(this, "Claw Bear", "ClawBear.png", new Move[] {new Scratch(), new Roar(), new Bite(), new Scratch()});
+        shadowBatScreen = new BossScreen(this, "ShadowBat", "ShadowBat.png", new Move[] {new Scratch(), new Roar(), new Bite(), new Scratch()});
+        slimeBossScreen = new BossScreen(this, "Slimeboss", "SlimeBoss.png", new Move[] {new Scratch(), new Roar(), new Bite(), new Scratch()});
+        randomBosses = new BossScreen[] { sparkWolfScreen, clawBearScreen, shadowBatScreen };
         lastTile = map.getTileIndexByPosition(player.getX(), player.getY());
         random = new Random();
         monsterNameStrings = new String[] {"Monster x", "Monster y", "Monster z"};
@@ -111,7 +116,7 @@ public class PlayLevelScreen extends Screen implements GameListener {
                 winScreen.update();
                 break;
             case ENCOUNTER:
-                encounterScreen.update();
+                currentFight.update();
                 break;
             // if a fight has been triggered, bring up the cutaway screen
             case CUTAWAY:
@@ -134,7 +139,7 @@ public class PlayLevelScreen extends Screen implements GameListener {
     @Override
     public void onFight() {
         // when this method is called within the game, it signals that a boss fight has been triggered
-        playLevelScreenState = PlayLevelScreenState.CUTAWAY;
+        startBossFight(slimeBossScreen);
     }
 
     public void draw(GraphicsHandler graphicsHandler) {
@@ -147,7 +152,7 @@ public class PlayLevelScreen extends Screen implements GameListener {
                 winScreen.draw(graphicsHandler);
                 break;
             case ENCOUNTER:
-                encounterScreen.draw(graphicsHandler);
+                currentFight.draw(graphicsHandler);
             break;
             case CUTAWAY:
                 cutawayScreen.draw(graphicsHandler);
@@ -252,6 +257,11 @@ public class PlayLevelScreen extends Screen implements GameListener {
     public void returnFromEncounter(){
         playLevelScreenState = PlayLevelScreenState.RUNNING;
     }
+    public void startBossFight(BossScreen boss) {
+    currentFight = boss;
+    currentFight.startFight();
+    playLevelScreenState = PlayLevelScreenState.ENCOUNTER;
+    }
     public void encounterChance(){
         //essentially this chunk checks if the spot the player is now is different from the last time lastTile was saved
         Point currentTile = map.getTileIndexByPosition(player.getX(), player.getY());
@@ -260,8 +270,7 @@ public class PlayLevelScreen extends Screen implements GameListener {
             if(currentTile.x == flowerTile.x && currentTile.y == flowerTile.y){
                 if (currentTile.x != lastTile.x || currentTile.y != lastTile.y) {
                     if(random.nextFloat() <= 1f){
-                    encounterScreen.setMonsterName(monsterNameStrings[random.nextInt(monsterNameStrings.length)]);
-                    playLevelScreenState = PlayLevelScreenState.ENCOUNTER;
+                    startBossFight(randomBosses[random.nextInt(randomBosses.length)]);
                     }
                 }
             }
