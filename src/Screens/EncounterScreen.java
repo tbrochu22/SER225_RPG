@@ -33,7 +33,10 @@ public class EncounterScreen extends Screen {
     protected SpriteFont enemyPlaceholder;
     protected int enemyHp, enemyMaxHp, playerHp, playerMaxHp;
     protected int damageRoll = 0;
-    protected int defenseBuff = 0;
+    protected int playerDefenseBuff = 0;
+    protected int enemyDefenseBuff = 0;
+    protected int playerAttackDebuff = 0;
+    protected int enemyAttackDebuff = 0;
     protected int resultScreenTimer;
     protected SpriteFont playerLabel;
     protected SpriteFont enemyLabel;
@@ -68,11 +71,10 @@ public class EncounterScreen extends Screen {
         if (playerAttacking) {
             if (move.getPower() > 0) {
                 damageRoll = (int)(Math.random() * 20) - 10;
-                enemyHp = Math.max(0, enemyHp - (move.getPower() + damageRoll));
-                damageRoll = 0;
+                enemyHp = Math.max(0, enemyHp - ((move.getPower() + damageRoll) - playerAttackDebuff));
             } else {
                 if (move.getType().equals("Defense Buff")) {
-                    defenseBuff += move.getEffect();
+                    playerDefenseBuff += move.getEffect();
                 } else if (move.getType().equals("Healing")) {
                     playerHp = Math.min(playerMaxHp, playerHp + move.getEffect());
                 }
@@ -80,13 +82,14 @@ public class EncounterScreen extends Screen {
         } else {
             if (move.getPower() > 0) {
                 damageRoll = (int)(Math.random() * 20) - 10;
-                playerHp = Math.max(0, playerHp - ((move.getPower() + damageRoll) - defenseBuff));
-                damageRoll = 0;
+                playerHp = Math.max(0, playerHp - ((move.getPower() + damageRoll) - playerDefenseBuff));
             } else {
                 if (move.getType().equals("Defense Buff")) {
-                    defenseBuff += move.getEffect();
+                    enemyDefenseBuff += move.getEffect();
                 } else if (move.getType().equals("Healing")) {
                     enemyHp = Math.min(enemyMaxHp, enemyHp + move.getEffect());
+                } else if (move.getType().equals("Attack Debuff")) {
+                    playerAttackDebuff += Math.abs(move.getEffect());
                 }
             }
         }
@@ -96,11 +99,11 @@ public class EncounterScreen extends Screen {
         }
 
         if (move.getPower() > 0 && !playerAttacking) {
-            if (((move.getPower() + damageRoll) - defenseBuff) < 0) {
+            if (((move.getPower() + damageRoll) - playerDefenseBuff) < 0) {
                 return move.getName() + " hit for 1 damage!";
             }
-            
-            return move.getName() + " hit for " + ((move.getPower() + damageRoll) - defenseBuff) + " damage!";
+
+            return move.getName() + " hit for " + ((move.getPower() + damageRoll) - playerDefenseBuff) + " damage!";
         }
 
         if (move.getType().equals("Defense Buff")) {
@@ -108,6 +111,9 @@ public class EncounterScreen extends Screen {
         }
         if (move.getType().equals("Healing")) {
             return move.getName() + " restored " + Math.abs(move.getEffect()) + " HP!";
+        }
+        if (move.getType().equals("Attack Debuff")) {
+            return move.getName() + " decreased your attack by " + Math.abs(move.getEffect()) + "!";
         }
         return move.getName() + " had no effect!";
     }
