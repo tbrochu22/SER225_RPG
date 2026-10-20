@@ -97,7 +97,7 @@ public class PlayLevelScreen extends Screen implements GameListener {
         sparkWolfScreen = new BossScreen(this, "Spark Wolf", "SparkWolf.png", new Move[] {new electricBite(), new Roar(), new Bite(), new Scratch()});
         clawBearScreen = new BossScreen(this, "Claw Bear", "ClawBear.png", new Move[] {new Scratch(), new Roar(), new Bite(), new Scratch()});
         shadowBatScreen = new BossScreen(this, "ShadowBat", "ShadowBat.png", new Move[] {new Scratch(), new Roar(), new Bite(), new Scratch()});
-        slimeBossScreen = new BossScreen(this, "Slimeboss", "SlimeBoss.png", new Move[] {new Scratch(), new Roar(), new Bite(), new Scratch()});
+        slimeBossScreen = new BossScreen(this, "Slimeboss", "Boss1.png", new Move[] {new Scratch(), new Roar(), new Bite(), new Scratch()});
         randomBosses = new BossScreen[] { sparkWolfScreen, clawBearScreen, shadowBatScreen };
         lastTile = map.getTileIndexByPosition(player.getX(), player.getY());
         random = new Random();
