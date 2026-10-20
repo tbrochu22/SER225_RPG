@@ -35,7 +35,7 @@ public class PlayLevelScreen extends Screen implements GameListener {
     protected java.util.Random random;
     protected Utils.Point lastTile;
     protected ArrayList<Rflower> flowers;
-    protected BossScreen sparkWolfScreen, clawBearScreen, shadowBatScreen, slimeBossScreen;
+    protected BossScreen sparkWolfScreen, clawBearScreen, shadowBatScreen, slimeBossScreen,slimeBossScreen2;
     protected BossScreen[] randomBosses;
     protected BossScreen currentFight;
 
@@ -59,6 +59,9 @@ public class PlayLevelScreen extends Screen implements GameListener {
         flagManager.addFlag("hasFoundBall", false);
         flagManager.addFlag("hasBeatenBoss1", false);
         flagManager.addFlag("hasBeatenBoss2", false);
+        flagManager.addFlag("archerQuestStarted", false);
+        flagManager.addFlag("hasGift", false);
+        flagManager.addFlag("archerQuestComplete", false);
 
         // define/setup map
         rockyPathMap = new RockyPathMap();
@@ -98,6 +101,7 @@ public class PlayLevelScreen extends Screen implements GameListener {
         clawBearScreen = new BossScreen(this, "Claw Bear", "ClawBear.png", new Move[] {new Scratch(), new Roar(), new Bite(), new Scratch()});
         shadowBatScreen = new BossScreen(this, "ShadowBat", "ShadowBat.png", new Move[] {new Scratch(), new Roar(), new Bite(), new Scratch()});
         slimeBossScreen = new BossScreen(this, "Slimeboss", "Boss1.png", new Move[] {new Scratch(), new Roar(), new Bite(), new Scratch()});
+        slimeBossScreen2 = new BossScreen(this, "Slimeboss", "Boss2.png", new Move[] {new Scratch(), new Roar(), new Bite(), new Scratch()});       
         randomBosses = new BossScreen[] { sparkWolfScreen, clawBearScreen, shadowBatScreen };
         lastTile = map.getTileIndexByPosition(player.getX(), player.getY());
         random = new Random();
@@ -145,14 +149,14 @@ public class PlayLevelScreen extends Screen implements GameListener {
 
     @Override
     public void onFight() {
-        // when this method is called within the game, it signals that a boss fight has been triggered
-        startBossFight(slimeBossScreen);
+        // each map has one boss, so the current map tells us which boss was talked to
+        currentBoss = (map == secondMap) ? 2 : 1;
+        // when this method is called within the game, it signals that a boss fight has been triggered 
+        startBossFight(currentBoss == 1 ? slimeBossScreen : slimeBossScreen2);
         MusicPlayer.playMusic("src/music/battle-music.wav");
         // reset HP/menus so a rematch (after losing) starts fresh instead of reusing the last fight's state
         cutawayScreen.initialize();
-        // each map has one boss, so the current map tells us which boss was talked to
-        currentBoss = (map == secondMap) ? 2 : 1;
-        playLevelScreenState = PlayLevelScreenState.CUTAWAY;
+        //playLevelScreenState = PlayLevelScreenState.CUTAWAY;
     }
 
     public void draw(GraphicsHandler graphicsHandler) {
