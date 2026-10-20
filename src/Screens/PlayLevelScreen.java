@@ -51,6 +51,9 @@ public class PlayLevelScreen extends Screen implements GameListener {
         flagManager.addFlag("hasTalkedToDinosaur", false);
         flagManager.addFlag("hasFoundBall", false);
         flagManager.addFlag("hasBeatenBoss1", false);
+        flagManager.addFlag("archerQuestStarted", false);
+        flagManager.addFlag("hasGift", false);
+        flagManager.addFlag("archerQuestComplete", false);
 
         // define/setup map
         map = new RockyPathMap();

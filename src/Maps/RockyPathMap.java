@@ -3,6 +3,7 @@ package Maps;
 import EnhancedMapTiles.Cookie;
 import EnhancedMapTiles.Deodorant;
 import EnhancedMapTiles.Flower;
+import EnhancedMapTiles.Gift;
 import EnhancedMapTiles.GlassEye;
 import EnhancedMapTiles.Rflower;
 import EnhancedMapTiles.ToyTrain;
@@ -17,6 +18,7 @@ import Scripts.TestMap.ArcherScript;
 import Scripts.TestMap.Boss1Script;
 import Scripts.TestMap.CookieScript;
 import Scripts.TestMap.DeodorantScript;
+import Scripts.TestMap.GiftScript;
 import Scripts.TestMap.GlassEyeScript;
 import Scripts.TestMap.MageScript;
 import Scripts.TestMap.ToyTrainScript;
@@ -74,6 +76,11 @@ public class RockyPathMap extends Map {
         ToyTrain toyTrain = new ToyTrain(getMapTile(3, 30).getLocation());
         toyTrain.setInteractScript(new ToyTrainScript());
         enhancedMapTiles.add(toyTrain);
+
+        Gift gift = new Gift(getMapTile(7, 35).getLocation());
+        gift.setInteractScript(new GiftScript());
+        gift.setExistenceFlag("hasGift");
+        enhancedMapTiles.add(gift);
 
 
         return enhancedMapTiles;
