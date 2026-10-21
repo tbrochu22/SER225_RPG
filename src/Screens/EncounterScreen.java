@@ -95,7 +95,7 @@ public class EncounterScreen extends Screen {
         }
 
         if (move.getPower() > 0 && playerAttacking) {
-            return move.getName() + " hit for " + ((move.getPower() + damageRoll)) + " damage!";
+            return move.getName() + " hit for " + ((move.getPower() + damageRoll) - playerAttackDebuff) + " damage!";
         }
 
         if (move.getPower() > 0 && !playerAttacking) {

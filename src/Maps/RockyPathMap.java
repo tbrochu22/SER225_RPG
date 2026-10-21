@@ -102,6 +102,7 @@ public class RockyPathMap extends Map {
 
         // boss waits near the end of the path
         Boss1 boss1 = new Boss1(3, getMapTile(25, 37).getLocation());
+        boss1.setExistenceFlag("hasBeatenBoss1");
         boss1.setInteractScript(new Boss1Script());
         npcs.add(boss1);
 
