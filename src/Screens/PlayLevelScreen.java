@@ -9,9 +9,11 @@ import Engine.GraphicsHandler;
 import Engine.Screen;
 import EnhancedMapTiles.Rflower;
 import Game.GameState;
+import GameObject.Rectangle;
 import Game.ScreenCoordinator;
 import Level.*;
 import Maps.RockyPathMap;
+import Maps.PyramidMap;
 import Maps.SecondMap;
 import Music.MusicPlayer;
 import Players.Knight;
@@ -35,14 +37,13 @@ public class PlayLevelScreen extends Screen implements GameListener {
     protected java.util.Random random;
     protected Utils.Point lastTile;
     protected ArrayList<Rflower> flowers;
-    protected BossScreen sparkWolfScreen, clawBearScreen, shadowBatScreen, slimeBossScreen,slimeBossScreen2;
-    protected BossScreen[] randomBosses;
-    protected BossScreen currentFight;
+    protected BossScreen sparkWolfScreen, clawBearScreen;
 
     // each map is only built once and then reused, so going back to a map keeps its state
     // (flowers already touched, items already picked up, boulders already cleared, etc.)
     protected RockyPathMap rockyPathMap;
     protected SecondMap secondMap;
+    protected PyramidMap pyramidMap;
     // which boss the current/last boss fight is against (1 = slime on the rocky path, 2 = octopus in the desert)
     protected int currentBoss;
 
@@ -59,13 +60,11 @@ public class PlayLevelScreen extends Screen implements GameListener {
         flagManager.addFlag("hasFoundBall", false);
         flagManager.addFlag("hasBeatenBoss1", false);
         flagManager.addFlag("hasBeatenBoss2", false);
-        flagManager.addFlag("archerQuestStarted", false);
-        flagManager.addFlag("hasGift", false);
-        flagManager.addFlag("archerQuestComplete", false);
 
         // define/setup map
         rockyPathMap = new RockyPathMap();
         secondMap = null;
+        pyramidMap = null;
         map = rockyPathMap;
         map.setFlagManager(flagManager);
         flowers = new ArrayList<>();
@@ -99,10 +98,6 @@ public class PlayLevelScreen extends Screen implements GameListener {
 
         sparkWolfScreen = new BossScreen(this, "Spark Wolf", "SparkWolf.png", new Move[] {new electricBite(), new Roar(), new Bite(), new Scratch()});
         clawBearScreen = new BossScreen(this, "Claw Bear", "ClawBear.png", new Move[] {new Scratch(), new Roar(), new Bite(), new Scratch()});
-        shadowBatScreen = new BossScreen(this, "ShadowBat", "ShadowBat.png", new Move[] {new Scratch(), new Roar(), new Bite(), new Scratch()});
-        slimeBossScreen = new BossScreen(this, "Slimeboss", "Boss1.png", new Move[] {new Scratch(), new Roar(), new Bite(), new Scratch()});
-        slimeBossScreen2 = new BossScreen(this, "Slimeboss", "Boss2.png", new Move[] {new Scratch(), new Roar(), new Bite(), new Scratch()});       
-        randomBosses = new BossScreen[] { sparkWolfScreen, clawBearScreen, shadowBatScreen };
         lastTile = map.getTileIndexByPosition(player.getX(), player.getY());
         random = new Random();
         monsterNameStrings = new String[] {"Monster x", "Monster y", "Monster z"};
@@ -127,7 +122,7 @@ public class PlayLevelScreen extends Screen implements GameListener {
                 winScreen.update();
                 break;
             case ENCOUNTER:
-                currentFight.update();
+                encounterScreen.update();
                 break;
             // if a fight has been triggered, bring up the cutaway screen
             case CUTAWAY:
@@ -149,14 +144,13 @@ public class PlayLevelScreen extends Screen implements GameListener {
 
     @Override
     public void onFight() {
-        // each map has one boss, so the current map tells us which boss was talked to
-        currentBoss = (map == secondMap) ? 2 : 1;
-        // when this method is called within the game, it signals that a boss fight has been triggered 
-        startBossFight(currentBoss == 1 ? slimeBossScreen : slimeBossScreen2);
+        // when this method is called within the game, it signals that a boss fight has been triggered
         MusicPlayer.playMusic("src/music/battle-music.wav");
         // reset HP/menus so a rematch (after losing) starts fresh instead of reusing the last fight's state
         cutawayScreen.initialize();
-        //playLevelScreenState = PlayLevelScreenState.CUTAWAY;
+        // each map has one boss, so the current map tells us which boss was talked to
+        currentBoss = (map == secondMap) ? 2 : 1;
+        playLevelScreenState = PlayLevelScreenState.CUTAWAY;
     }
 
     public void draw(GraphicsHandler graphicsHandler) {
@@ -169,7 +163,7 @@ public class PlayLevelScreen extends Screen implements GameListener {
                 winScreen.draw(graphicsHandler);
                 break;
             case ENCOUNTER:
-                currentFight.draw(graphicsHandler);
+                encounterScreen.draw(graphicsHandler);
             break;
             case CUTAWAY:
                 cutawayScreen.draw(graphicsHandler);
@@ -199,7 +193,7 @@ public class PlayLevelScreen extends Screen implements GameListener {
             if (currentBoss == 1) {
                 onBoss1Defeated();
             } else if (currentBoss == 2) {
-                flagManager.setFlag("hasBeatenBoss2");
+                onBoss2Defeated();
             }
         }
         returnFromEncounter(playerLost);
@@ -223,11 +217,28 @@ public class PlayLevelScreen extends Screen implements GameListener {
 
     // desert exit: the opening in the top wall of second_map.txt
     private static final int DESERT_EXIT_ROW = 0;
-    private static final int DESERT_EXIT_START_X = 9;
-    private static final int DESERT_EXIT_END_X = 10;
+    private static final int DESERT_EXIT_START_X = 19;
+    private static final int DESERT_EXIT_END_X = 20;
     // where the player lands in the desert when coming from the rocky path (just below the opening)
-    private static final int DESERT_ARRIVAL_X = 9;
+    private static final int DESERT_ARRIVAL_X = 19;
     private static final int DESERT_ARRIVAL_Y = 1;
+
+    // desert exit past Boss2: these tiles start as boulders in the bottom wall of second_map.txt
+    private static final int DESERT_BOSS_EXIT_ROW = 29;
+    private static final int DESERT_BOSS_EXIT_START_X = 4;
+    private static final int DESERT_BOSS_EXIT_END_X = 5;
+
+    // the pyramid's doorway in the desert, and where the player lands when walking back out (just below it)
+    private static final int PYRAMID_DOOR_X = 31;
+    private static final int PYRAMID_DOOR_Y = 17;
+    private static final int DESERT_FROM_PYRAMID_X = 31;
+    private static final int DESERT_FROM_PYRAMID_Y = 19;
+
+    // the doorway inside the pyramid (bottom wall of pyramid_map.txt), and where the player lands when walking in
+    private static final int PYRAMID_INSIDE_DOOR_X = 9;
+    private static final int PYRAMID_INSIDE_DOOR_Y = 13;
+    private static final int PYRAMID_ARRIVAL_X = 9;
+    private static final int PYRAMID_ARRIVAL_Y = 11;
 
     // marks Boss1 as beaten and clears the boulders blocking the end of the path
     public void onBoss1Defeated() {
@@ -244,6 +255,48 @@ public class PlayLevelScreen extends Screen implements GameListener {
             // tile index 1 in RockyTileset is the dirt path (passable)
             MapTile pathTile = rockyPathMap.getTileset().getTile(1).build(location.x, location.y);
             rockyPathMap.setMapTile(x, ROCKY_EXIT_ROW, pathTile);
+        }
+    }
+
+    // marks Boss2 as beaten and clears the boulders blocking the end of the desert path
+    public void onBoss2Defeated() {
+        if (!flagManager.isFlagSet("hasBeatenBoss2")) {
+            flagManager.setFlag("hasBeatenBoss2");
+        }
+        openDesertBossExit();
+    }
+
+    // swaps the boulders past Boss2 for dirt path tiles (safe to call more than once)
+    private void openDesertBossExit() {
+        if (secondMap == null) {
+            return;
+        }
+        for (int x = DESERT_BOSS_EXIT_START_X; x <= DESERT_BOSS_EXIT_END_X; x++) {
+            Point location = secondMap.getMapTile(x, DESERT_BOSS_EXIT_ROW).getLocation();
+            // tile index 1 in DesertTileset is the dirt path (passable)
+            MapTile pathTile = secondMap.getTileset().getTile(1).build(location.x, location.y);
+            secondMap.setMapTile(x, DESERT_BOSS_EXIT_ROW, pathTile);
+        }
+    }
+
+    // true when the player is pressed up against a one-tile doorway
+    // (the knight's body is exactly one tile wide, so instead of having to squeeze fully into the doorway,
+    // touching it while lined up with it is enough)
+    // doorIsAbove = the doorway is above the player (walking up into it), otherwise it's below (walking down into it)
+    private boolean isTouchingDoorway(int doorTileX, int doorTileY, boolean doorIsAbove) {
+        int tileSize = map.getTileset().getScaledSpriteWidth();
+        float doorLeft = doorTileX * tileSize;
+        float doorTop = doorTileY * tileSize;
+        Rectangle body = player.getBounds();
+        float centerX = (body.getX1() + body.getX2()) / 2f;
+        boolean linedUp = centerX >= doorLeft + 8 && centerX <= doorLeft + tileSize - 8;
+        if (!linedUp) {
+            return false;
+        }
+        if (doorIsAbove) {
+            return body.getY1() <= doorTop + tileSize + 2;
+        } else {
+            return body.getY2() >= doorTop - 2;
         }
     }
 
@@ -267,6 +320,20 @@ public class PlayLevelScreen extends Screen implements GameListener {
             if (currentTile.y <= DESERT_EXIT_ROW
                     && currentTile.x >= DESERT_EXIT_START_X && currentTile.x <= DESERT_EXIT_END_X) {
                 loadMap(rockyPathMap, ROCKY_RETURN_X, ROCKY_RETURN_Y, Direction.UP);
+            }
+            // walking up into the pyramid's doorway goes inside
+            else if (isTouchingDoorway(PYRAMID_DOOR_X, PYRAMID_DOOR_Y, true)) {
+                if (pyramidMap == null) {
+                    pyramidMap = new PyramidMap();
+                }
+                loadMap(pyramidMap, PYRAMID_ARRIVAL_X, PYRAMID_ARRIVAL_Y, Direction.UP);
+            }
+            // TODO: once there's a third map, walking through the opened exit past Boss2
+            // (DESERT_BOSS_EXIT_ROW, DESERT_BOSS_EXIT_START_X..END_X) should load it here
+        } else if (map == pyramidMap) {
+            // walking down into the doorway in the bottom wall goes back out to the desert, just below the pyramid
+            if (isTouchingDoorway(PYRAMID_INSIDE_DOOR_X, PYRAMID_INSIDE_DOOR_Y, false)) {
+                loadMap(secondMap, DESERT_FROM_PYRAMID_X, DESERT_FROM_PYRAMID_Y, Direction.DOWN);
             }
         }
     }
@@ -295,6 +362,9 @@ public class PlayLevelScreen extends Screen implements GameListener {
 
         if (map == rockyPathMap && flagManager.isFlagSet("hasBeatenBoss1")) {
             openRockyPathExit();
+        }
+        if (map == secondMap && flagManager.isFlagSet("hasBeatenBoss2")) {
+            openDesertBossExit();
         }
 
         flowers.clear();
@@ -332,11 +402,6 @@ public class PlayLevelScreen extends Screen implements GameListener {
         playLevelScreenState = PlayLevelScreenState.RUNNING;
 
     }
-    public void startBossFight(BossScreen boss) {
-    currentFight = boss;
-    currentFight.startFight();
-    playLevelScreenState = PlayLevelScreenState.ENCOUNTER;
-    }
     public void encounterChance(){
         //essentially this chunk checks if the spot the player is now is different from the last time lastTile was saved
         Point currentTile = map.getTileIndexByPosition(player.getX(), player.getY());
@@ -345,7 +410,6 @@ public class PlayLevelScreen extends Screen implements GameListener {
             if(currentTile.x == flowerTile.x && currentTile.y == flowerTile.y){
                 if (currentTile.x != lastTile.x || currentTile.y != lastTile.y) {
                     if(random.nextFloat() <= 1f){
-                    startBossFight(randomBosses[random.nextInt(randomBosses.length)]);
                     encounterScreen.setMonsterName(monsterNameStrings[random.nextInt(monsterNameStrings.length)]);
                     MusicPlayer.playMusic("src/music/battle-music.wav");
                     playLevelScreenState = PlayLevelScreenState.ENCOUNTER;
