@@ -1,5 +1,6 @@
 package Scripts.TestMap;
 
+import Battle.Hawkeye;
 import Level.Script;
 import ScriptActions.*;
 import java.util.ArrayList;
@@ -30,8 +31,14 @@ public class ArcherScript extends Script {
                 addScriptAction(new TextboxScriptAction() {{
                     addText("You found my gift!");
                     addText("Thank you so much!");
+                    addText("Take this as a reward!");
+                    addText("You obtained a Bow!");
+                    addText("You learned "
+                            + new Hawkeye().getName() + "!");
+                    addText("Use 'E' to open the menu and equip it!");
                 }});
                 addScriptAction(new ChangeFlagScriptAction("archerQuestComplete", true));
+                addScriptAction(new ChangeFlagScriptAction("move1Unlocked", true));
             }});
 
             // Stage 1b: quest started, player doesn't have the item yet

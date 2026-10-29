@@ -67,6 +67,7 @@ public class RockyPathMap extends Map {
 
         Cookie cookie = new Cookie(getMapTile(20, 21).getLocation());
         cookie.setInteractScript(new CookieScript());
+        cookie.setExistenceFlag("move2Unlocked");
         enhancedMapTiles.add(cookie);
 
         Deodorant deodorant = new Deodorant(getMapTile(29, 29).getLocation());

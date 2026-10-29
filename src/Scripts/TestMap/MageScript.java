@@ -22,8 +22,11 @@ public class MageScript extends Script {
 
         scriptActions.add(new TextboxScriptAction() {{
             addText("Ah, a traveler! Welcome.");
-            addText("I'm the Mage who watches over this path");
+            addText("I am the Mage who watches over this path.");
             addText("Follow it carefully, and keep an eye out!");
+            addText("Be cautious, hero!");
+            addText("Enemies ahead lurk among the red flowers!");
+            addText("Good luck on your journey!");
         }});
 
         scriptActions.add(new UnlockPlayerScriptAction());

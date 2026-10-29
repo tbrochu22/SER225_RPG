@@ -1,5 +1,14 @@
 package Level;
 
+import Battle.CureWounds;
+import Battle.Move;
+import Battle.SacredFlame;
+import Battle.Slash;
+import Battle.Hawkeye;
+import Battle.Brace;
+import Battle.Test3;
+import Battle.Test4;
+import Battle.VigorUp;
 import java.awt.Color;
 import java.util.ArrayList;
 
@@ -13,6 +22,14 @@ import GameObject.SpriteSheet;
 import Utils.Direction;
 
 public abstract class Player extends GameObject {
+    private final Move[] availableMoves = {
+            new Slash(), new SacredFlame(), new VigorUp(), new CureWounds(),
+            new Hawkeye(), new Brace(), new Test3(), new Test4()
+    };
+    private final Move[] equippedMoves = {
+            availableMoves[0], availableMoves[1], availableMoves[2], availableMoves[3]
+    };
+
     // values that affect player movement
     // these should be set in a subclass
     protected float walkSpeed = 0;
@@ -202,6 +219,46 @@ public abstract class Player extends GameObject {
     }
 
     public Key getInteractKey() { return INTERACT_KEY; }
+    public Move[] getEquippedMoves() { return equippedMoves.clone(); }
+    public Move[] getAvailableMoves() { return availableMoves.clone(); }
+
+    public void equipMove(int moveIndex, Move move) {
+        if (moveIndex < 0 || moveIndex >= equippedMoves.length) {
+            throw new IllegalArgumentException("Move index must refer to an equipped slot.");
+        }
+        boolean isAvailable = false;
+        for (Move availableMove : availableMoves) {
+            if (availableMove == move) {
+                isAvailable = true;
+                break;
+            }
+        }
+        if (!isAvailable) {
+            throw new IllegalArgumentException("Move must be in the player's available move list.");
+        }
+
+        for (int equippedIndex = 0; equippedIndex < equippedMoves.length; equippedIndex++) {
+            if (equippedMoves[equippedIndex] == move) {
+                Move equippedMove = equippedMoves[moveIndex];
+                equippedMoves[moveIndex] = equippedMoves[equippedIndex];
+                equippedMoves[equippedIndex] = equippedMove;
+                return;
+            }
+        }
+        equippedMoves[moveIndex] = move;
+    }
+
+    public void swapEquippedMoves(int firstMoveIndex, int secondMoveIndex) {
+        if (firstMoveIndex < 0 || firstMoveIndex >= equippedMoves.length
+                || secondMoveIndex < 0 || secondMoveIndex >= equippedMoves.length) {
+            throw new IllegalArgumentException("Move indexes must refer to an equipped move.");
+        }
+
+        Move move = equippedMoves[firstMoveIndex];
+        equippedMoves[firstMoveIndex] = equippedMoves[secondMoveIndex];
+        equippedMoves[secondMoveIndex] = move;
+    }
+
     public Direction getCurrentWalkingXDirection() { return currentWalkingXDirection; }
     public Direction getCurrentWalkingYDirection() { return currentWalkingYDirection; }
     public Direction getLastWalkingXDirection() { return lastWalkingXDirection; }
@@ -289,7 +346,8 @@ public abstract class Player extends GameObject {
             lastAmountMovedX = super.moveXHandleCollision(moveAmountX);
         }
 
-        if (map != null && map.getTextbox() != null && map.getTextbox().isActive() && map.getTextbox().isTextQueueEmpty()) {
+        if (map != null && map.getTextbox() != null && map.getTextbox().isActive()
+                && map.getTextbox().isTextQueueEmpty() && map.getActiveScript() == null) {
             map.getTextbox().setIsActive(false);
             map.getTextbox().setForceLeftSide(false);
             map.getTextbox().setInteractKey(INTERACT_KEY);

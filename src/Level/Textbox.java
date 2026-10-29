@@ -233,14 +233,10 @@ public class Textbox {
         // if camera is at bottom of screen, textbox is drawn at top of screen instead of the bottom like usual
         // to prevent it from covering the player
         int y = !map.getCamera().isAtBottomOfMap() ? bottomY : topY;
-        boolean useRightSide = !forceLeftSide && options != null;
-        int boxX = useRightSide ? rightSideX : x;
-        graphicsHandler.drawFilledRectangleWithBorder(boxX, y, width, height, Color.white, Color.black, 2);
+        graphicsHandler.drawFilledRectangleWithBorder(x, y, width, height, Color.white, Color.black, 2);
 
         if (text != null) {
-            // draw text in textbox
-            int textX = useRightSide ? boxX + 15 : x + 15;
-            text.drawWithParsedNewLines(graphicsHandler, textX - x + 10);
+            text.drawWithParsedNewLines(graphicsHandler, 10);
             
             if (options != null) {
                 // draw options textbox
