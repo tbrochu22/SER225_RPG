@@ -4,6 +4,10 @@ import Battle.Bite;
 import Battle.Move;
 import Battle.Roar;
 import Battle.Scratch;
+import Battle.Hawkeye;
+import Battle.Brace;
+import Battle.Test3;
+import Battle.Test4;
 import Battle.electricBite;
 import Engine.GraphicsHandler;
 import Engine.Screen;
@@ -60,6 +64,14 @@ public class PlayLevelScreen extends Screen implements GameListener {
         flagManager.addFlag("hasFoundBall", false);
         flagManager.addFlag("hasBeatenBoss1", false);
         flagManager.addFlag("hasBeatenBoss2", false);
+        flagManager.addFlag("archerQuestStarted", false);
+        flagManager.addFlag("hasGift", false);
+        flagManager.addFlag("archerQuestComplete", false);
+        flagManager.addFlag("move1Unlocked", false);
+        flagManager.addFlag("move2Unlocked", false);
+        flagManager.addFlag("move3Unlocked", false);
+        flagManager.addFlag("move4Unlocked", false);
+        flagManager.addFlag("move5Unlocked", false);
 
         // define/setup map
         rockyPathMap = new RockyPathMap();
@@ -378,12 +390,49 @@ public class PlayLevelScreen extends Screen implements GameListener {
 
     @Override
     public void onSwapMoves() {
+        swapMovesScreen.initialize();
         playLevelScreenState = PlayLevelScreenState.SWAP_MOVES;
     }
 
     public void endSwapMoves() {
         playLevelScreenState = PlayLevelScreenState.RUNNING;
         player.openMenu();
+    }
+
+    public Move[] getEquippedMoves() {
+        return player.getEquippedMoves();
+    }
+
+    public Move[] getAvailableMoves() {
+        return player.getAvailableMoves();
+    }
+
+    public boolean isMoveUnlocked(Move move) {
+        if (move instanceof Hawkeye) {
+            return flagManager.isFlagSet("move1Unlocked");
+        }
+        if (move instanceof Brace) {
+            return flagManager.isFlagSet("move2Unlocked");
+        }
+        if (move instanceof Test3) {
+            return flagManager.isFlagSet("move3Unlocked");
+        }
+        if (move instanceof Test4) {
+            return flagManager.isFlagSet("move4Unlocked");
+        }
+        
+        return true;
+    }
+
+    public void equipMove(int moveIndex, Move move) {
+        if (!isMoveUnlocked(move)) {
+            throw new IllegalArgumentException("Move must be unlocked before it can be equipped.");
+        }
+        player.equipMove(moveIndex, move);
+    }
+
+    public void swapEquippedMoves(int firstMoveIndex, int secondMoveIndex) {
+        player.swapEquippedMoves(firstMoveIndex, secondMoveIndex);
     }
 
     // This enum represents the different states this screen can be in

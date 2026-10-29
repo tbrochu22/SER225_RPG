@@ -40,6 +40,7 @@ public class SecondMap extends Map {
 
         // second boss waits in the bottom-left corner at the end of the path (after the pyramid)
         Boss2 boss2 = new Boss2(2, getMapTile(2, 26).getLocation());
+        boss2.setExistenceFlag("hasBeatenBoss2");
         boss2.setInteractScript(new Boss2Script());
         npcs.add(boss2);
 
