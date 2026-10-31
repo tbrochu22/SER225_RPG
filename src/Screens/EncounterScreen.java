@@ -1,10 +1,7 @@
 package Screens;
 
 import Battle.Move;
-import Battle.Scratch;
-import Battle.electricBite;
-import Battle.Bite;
-import Battle.Roar;
+import Battle.Haymaker;
 import Engine.*;
 import SpriteFont.SpriteFont;
 import java.awt.*;
@@ -14,6 +11,7 @@ import java.awt.image.BufferedImage;
 // This class is for the encounter screen
 public class EncounterScreen extends Screen {
     private static final int RESULT_SCREEN_DELAY = 3 * Config.TARGET_FPS;
+    private static final int BURN_MESSAGE_DELAY = Config.TARGET_FPS;
 
     protected SpriteFont encounterMessage;
     protected SpriteFont instructions;
@@ -30,23 +28,39 @@ public class EncounterScreen extends Screen {
     protected int enemyHp, enemyMaxHp, playerHp, playerMaxHp;
     protected int usedMoves1 = 0, usedMoves2 = 0, usedMoves3 = 0, usedMoves4 = 0;
     protected int damageRoll = 0;
+    protected int damageCalcPlayer = 0;
+    protected int damageCalcEnemy = 0;
     protected int playerDefenseBuff = 0;
     protected int enemyDefenseBuff = 0;
-    protected int playerAttackDebuff = 0;
-    protected int enemyAttackDebuff = 0;
+    protected int playerAttackBuff = 0;
+    protected int enemyAttackBuff = 0;
     protected boolean playerStunned = false;
     protected boolean enemyStunned = false;
     protected int stunChance = 50;
+    protected boolean moveStun = false;
     protected boolean playerProtected = false;
     protected boolean enemyProtected = false;
+    protected boolean playerBurned = false;
+    protected boolean enemyBurned = false;
+    protected boolean playerBurnProcessedThisTurn;
+    protected boolean enemyBurnProcessedThisTurn;
+    protected String playerTurnBurnMessage = "";
+    protected String lastEnemyTurnMessage = "";
+    protected int playerBurnMessageDelay;
+    protected int lifestealAmount;
+    protected boolean isChargingPlayer = false;
+    protected boolean isChargingEnemy = false;
+    protected boolean usedHaymakerPlayer = false;
+    protected boolean usedHaymakerEnemy = false;
     protected int resultScreenTimer;
     protected SpriteFont playerLabel;
     protected SpriteFont enemyLabel;
     protected SpriteFont[] buttonLabels = new SpriteFont[4];
     protected Move[] moves;
-    protected Move[] enemyMoves = { new Roar(), new Bite(), new electricBite(), new Scratch()};
+    protected Move[] enemyMoves;
     protected int textBoxTimer;
     protected int enemyTurnDelay;
+    protected boolean enemyTurnPending;
     protected boolean enemyStarts;
     protected String battleMessage;
     protected SpriteFont moveInfoText;
@@ -54,8 +68,9 @@ public class EncounterScreen extends Screen {
     protected BufferedImage knightBack;
     protected BufferedImage enemySprite;
 
-    public EncounterScreen(PlayLevelScreen playLevelScreen) {
+    public EncounterScreen(PlayLevelScreen playLevelScreen, Move[] enemyMoves) {
         this.playLevelScreen = playLevelScreen;
+        this.enemyMoves = enemyMoves.clone();
         initialize();
         knightBack = ImageLoader.load("KnightBack.png");
     }
@@ -71,6 +86,13 @@ public class EncounterScreen extends Screen {
         }
 
         if (playerAttacking) {
+            usedHaymakerPlayer = false;
+            if (isChargingPlayer && playerAttacking) {
+                isChargingPlayer = false;
+                usedHaymakerPlayer = true;
+                enemyHp = Math.max(0, enemyHp - (((80 + damageRoll) + playerAttackBuff) - enemyDefenseBuff));
+                return "Haymaker hit for " + (((80 + damageRoll) + playerAttackBuff) - enemyDefenseBuff) + " damage!";
+            }
             if (playerStunned == true) {
                 if (random.nextInt(100) < stunChance) {
                     return "Player is stunned!";
@@ -83,11 +105,35 @@ public class EncounterScreen extends Screen {
                     enemyProtected = false;
                     return "Protection nullified damage!";
                 }
-                damageRoll = (int)(Math.random() * 20) - 10;
-                if (((move.getPower() + damageRoll) - playerAttackDebuff) < 0) {
+                if (move.getType().equals("Charge Attack") && !usedHaymakerPlayer) {
+                    if (!isChargingPlayer) {
+                        isChargingPlayer = true;
+                        return move.getName() + " is charging!";
+                    }
+                }
+                damageRoll = (int)(Math.random() * 10) - 5;
+                damageCalcPlayer = (((move.getPower() + damageRoll) + playerAttackBuff) - enemyDefenseBuff);
+                if (damageCalcPlayer < 0) {
                     enemyHp = Math.max(0, enemyHp - 1);
                 } else {
-                    enemyHp = Math.max(0, enemyHp - ((move.getPower() + damageRoll) - playerAttackDebuff));
+                    enemyHp = Math.max(0, enemyHp - damageCalcPlayer);
+                }
+
+                if (move.getType().equals("Electric Attack")) {
+                    if (random.nextInt(100) < stunChance) {
+                        moveStun = true;
+                        enemyStunned = true;
+                    }
+                } else if (move.getType().equals("Vamp")) {
+                    lifestealAmount = (damageCalcPlayer) / 2;
+                    if (lifestealAmount < 0) {
+                        lifestealAmount = 1;
+                    }
+                    enemyHp = Math.min(enemyMaxHp, enemyHp + lifestealAmount);
+                } else if (move.getType().equals("Def Boost Attack")) {
+                    playerDefenseBuff += move.getEffect();
+                } else if (move.getType().equals("Atk Lower Attack")) {
+                    enemyAttackBuff += Math.abs(move.getEffect());
                 }
             } else {
                 if (enemyProtected == true) {
@@ -95,15 +141,30 @@ public class EncounterScreen extends Screen {
                 }
                 if (move.getType().equals("Defense Buff")) {
                     playerDefenseBuff += move.getEffect();
+                } else if (move.getType().equals("Attack Buff")) {
+                    playerAttackBuff += move.getEffect();
                 } else if (move.getType().equals("Healing")) {
                     playerHp = Math.min(playerMaxHp, playerHp + move.getEffect());
+                } else if (move.getType().equals("Attack Debuff")) {
+                    enemyAttackBuff -= Math.abs(move.getEffect());
+                } else if (move.getName().equals("Defense Debuff")) {
+                    enemyDefenseBuff -= Math.abs(move.getEffect());
                 } else if (move.getType().equals("Stun")) {
                     enemyStunned = true;
                 } else if (move.getType().equals("Protect")) {
                     playerProtected = true;
+                } else if (move.getType().equals("Burn")) {
+                    enemyBurned = true;
                 }
             }
         } else {
+            usedHaymakerEnemy = false;
+            if (isChargingEnemy && !playerAttacking) {
+                isChargingEnemy = false;
+                usedHaymakerEnemy = true;
+                playerHp = Math.max(0, playerHp - (((80 + damageRoll) + enemyAttackBuff) - playerDefenseBuff));
+                return "Haymaker hit for " + (((80 + damageRoll) + enemyAttackBuff) - playerDefenseBuff) + " damage!";
+            }
             if (enemyStunned == true) {
                 if (random.nextInt(100) < stunChance) {
                     return "Enemy is stunned!";
@@ -116,11 +177,34 @@ public class EncounterScreen extends Screen {
                     playerProtected = false;
                     return "Protection nullified damage!";
                 }
-                damageRoll = (int)(Math.random() * 20) - 10;
-                if (((move.getPower() + damageRoll) - playerDefenseBuff) < 0) {
+                if (move.getType().equals("Charge Attack") && !usedHaymakerEnemy) {
+                    if (!isChargingEnemy) {
+                        isChargingEnemy = true;
+                        return move.getName() + " is charging!";
+                    }
+                }
+                damageRoll = (int)(Math.random() * 10) - 5;
+                damageCalcEnemy = (((move.getPower() + damageRoll) + enemyAttackBuff) - playerDefenseBuff);
+                if (damageCalcPlayer < 0) {
                     playerHp = Math.max(0, playerHp - 1);
                 } else {
-                    playerHp = Math.max(0, playerHp - ((move.getPower() + damageRoll) - playerDefenseBuff));
+                    playerHp = Math.max(0, playerHp - damageCalcEnemy);
+                }
+                if (move.getType().equals("Electric Attack")) {
+                    if (random.nextInt(100) < stunChance) {
+                        moveStun = true;
+                        playerStunned = true;
+                    }
+                } else if (move.getType().equals("Vamp")) {
+                    lifestealAmount = (damageCalcEnemy) / 2;
+                    if (lifestealAmount < 0) {
+                        lifestealAmount = 1;
+                    }
+                    enemyHp = Math.min(enemyMaxHp, enemyHp + lifestealAmount);
+                } else if (move.getType().equals("Def Boost Attack")) {
+                    enemyDefenseBuff += move.getEffect();
+                } else if (move.getType().equals("Atk Lower Attack")) {
+                    playerAttackBuff += Math.abs(move.getEffect());
                 }
             } else {
                 if (playerProtected == true) {
@@ -128,48 +212,101 @@ public class EncounterScreen extends Screen {
                 }
                 if (move.getType().equals("Defense Buff")) {
                     enemyDefenseBuff += move.getEffect();
+                } else if (move.getType().equals("Attack Buff")) {
+                    enemyAttackBuff += move.getEffect();
+                } else if (move.getType().equals("Defense Debuff")) {
+                    playerDefenseBuff -= Math.abs(move.getEffect());
+                } else if (move.getType().equals("Attack Debuff")) {
+                    playerAttackBuff -= Math.abs(move.getEffect());
                 } else if (move.getType().equals("Healing")) {
                     enemyHp = Math.min(enemyMaxHp, enemyHp + move.getEffect());
-                } else if (move.getType().equals("Attack Debuff")) {
-                    playerAttackDebuff += Math.abs(move.getEffect());
                 } else if (move.getType().equals("Stun")) {
                     playerStunned = true;
                 } else if (move.getType().equals("Protect")) {
                     enemyProtected = true;
+                } else if (move.getType().equals("Burn")) {
+                    playerBurned = true;
+
+                } else if (move.getType().equals("Healing")) {
+                    enemyHp = Math.min(enemyMaxHp, enemyHp + move.getEffect());
+                } else if (move.getType().equals("Attack Debuff")) {
+                    playerAttackBuff += Math.abs(move.getEffect());
+                } else if (move.getType().equals("Defense Debuff")) {
+                    playerDefenseBuff += Math.abs(move.getEffect());
+                } else if (move.getType().equals("Stun")) {
+                    playerStunned = true;
+                } else if (move.getType().equals("Protect")) {
+                    enemyProtected = true;
+                } else if (move.getType().equals("Burn")) {
+                    playerBurned = true;
                 }
             }
         }
-
         if (move.getPower() > 0 && playerAttacking) {
-            if (((move.getPower() + damageRoll) - playerAttackDebuff) < 0) {
+            if (damageCalcPlayer < 0) {
                 return move.getName() + " hit for 1 damage!";
             }
+
+            if (move.getType().equals("Electric Attack")) {
+                if (moveStun) {
+                    moveStun = false;
+                    return move.getName() + " hit for " + (damageCalcPlayer) + " damage and stunned the enemy!";
+                }
+            } else if (move.getType().equals("Vamp")) {
+                return move.getName() + " hit for " + (damageCalcPlayer) + " damage and healed for " + lifestealAmount + " HP!";
+            } else if (move.getType().equals("Def Boost Attack")) {
+                return move.getName() + " hit for " + (damageCalcPlayer) + " damage and increased user's defense by " + move.getEffect() + "!";
+            } else if (move.getType().equals("Atk Lower Attack")) {
+                return move.getName() + " hit for " + (damageCalcPlayer) + " damage and lowered enemy's attack by " + Math.abs(move.getEffect()) + "!";
+            }
             
-            return move.getName() + " hit for " + ((move.getPower() + damageRoll) - playerAttackDebuff) + " damage!";
+            return move.getName() + " hit for " + (damageCalcPlayer) + " damage!";
         }
 
         if (move.getPower() > 0 && !playerAttacking) {
-            if (((move.getPower() + damageRoll) - playerDefenseBuff) < 0) {
+            if (damageCalcEnemy < 0) {
                 return move.getName() + " hit for 1 damage!";
             }
 
-            return move.getName() + " hit for " + ((move.getPower() + damageRoll) - playerDefenseBuff) + " damage!";
+            if (move.getType().equals("Electric Attack")) {
+                if (moveStun) {
+                    moveStun = false;
+                    return move.getName() + " hit for " + (damageCalcEnemy) + " damage and stunned the enemy!";
+                }
+            } else if (move.getType().equals("Vamp")) {
+                return move.getName() + " hit for " + (damageCalcEnemy) + " damage and healed for " + lifestealAmount + " HP!";
+            } else if (move.getType().equals("Def Boost Attack")) {
+                return move.getName() + " hit for " + (damageCalcEnemy) + " damage and increased user's defense by " + move.getEffect() + "!";
+            } else if (move.getType().equals("Atk Lower Attack")) {
+                return move.getName() + " hit for " + (damageCalcEnemy) + " damage and lowered enemy's attack by " + Math.abs(move.getEffect()) + "!";
+            }
+
+            return move.getName() + " hit for " + (damageCalcEnemy) + " damage!";
         }
 
         if (move.getType().equals("Defense Buff")) {
-            return move.getName() + " increased your defense by " + move.getEffect() + "!";
+            return move.getName() + " increased user's defense by " + move.getEffect() + "!";
+        }
+        if (move.getType().equals("Attack Buff")) {
+            return move.getName() + " increased user's attack by " + move.getEffect() + "!";
         }
         if (move.getType().equals("Healing")) {
             return move.getName() + " restored " + Math.abs(move.getEffect()) + " HP!";
         }
         if (move.getType().equals("Attack Debuff")) {
-            return move.getName() + " decreased your attack by " + Math.abs(move.getEffect()) + "!";
+            return move.getName() + " decreased enemy's attack by " + Math.abs(move.getEffect()) + "!";
+        }
+        if (move.getType().equals("Defense Debuff")) {
+            return move.getName() + " decreased enemy's defense by " + Math.abs(move.getEffect()) + "!";
         }
         if (move.getType().equals("Stun")) {
             return move.getName() + " stunned the enemy!";
         }
         if (move.getType().equals("Protect")) {
             return move.getName() + " prevents damage next turn!";
+        }
+        if (move.getType().equals("Burn")) {
+            return move.getName() + " burned the enemy!";
         }
         return move.getName() + " had no effect!";
     }
@@ -208,6 +345,15 @@ public class EncounterScreen extends Screen {
         }
     }
 
+    private boolean allMovesOutOfUses() {
+        for (int i = 0; i < moves.length; i++) {
+            if (moves[i].getUses() - getUsedMoves(i) > 0) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     @Override
     public void initialize() {
         moves = playLevelScreen.getEquippedMoves();
@@ -215,6 +361,7 @@ public class EncounterScreen extends Screen {
         battleCurrentMenuItemY = 0;
         enemyStarts = random.nextBoolean();
         enemyTurnDelay = enemyStarts ? 60 : 0;
+        enemyTurnPending = enemyStarts;
         battleMessage = enemyStarts ? "Enemy moves first!" : "";
         textBoxTimer = enemyStarts ? 60 : 0;
         battleMenuItemSelected = enemyStarts ? 0 : -1;
@@ -241,12 +388,22 @@ public class EncounterScreen extends Screen {
         damageRoll = 0;
         playerDefenseBuff = 0;
         enemyDefenseBuff = 0;
-        playerAttackDebuff = 0;
-        enemyAttackDebuff = 0;
+        playerAttackBuff = 0;
+        enemyAttackBuff = 0;
         playerStunned = false;
         enemyStunned = false;
         playerProtected = false;
         enemyProtected = false;
+        playerBurned = false;
+        enemyBurned = false;
+        playerBurnProcessedThisTurn = false;
+        enemyBurnProcessedThisTurn = false;
+        lifestealAmount = 0;
+        isChargingPlayer = false;
+        isChargingEnemy = false;
+        playerTurnBurnMessage = "";
+        lastEnemyTurnMessage = "";
+        playerBurnMessageDelay = 0;
         resultScreenTimer = 0;
         for(int row = 0; row < 2; row ++){
             for(int col = 0; col < 2; col ++){
@@ -266,6 +423,13 @@ public class EncounterScreen extends Screen {
         if (Keyboard.isKeyUp(Key.ENTER)) {
             keyLocker.unlockKey(Key.ENTER);
         }
+        if (enemyHp > 0 && playerHp > 0
+                && Keyboard.isKeyDown(Key.ENTER) && !keyLocker.isKeyLocked(Key.ENTER)) {
+            keyLocker.lockKey(Key.ENTER);
+            enemyHp = 0;
+            resultScreenTimer = 0;
+            return;
+        }
         if (enemyHp <= 0 || playerHp <= 0) {
             if (resultScreenTimer > 0) {
                 keyLocker.lockKey(Key.ENTER);
@@ -280,15 +444,75 @@ public class EncounterScreen extends Screen {
             return;
         }
 
-        if (enemyTurnDelay > 0) {
+        if (enemyTurnPending && enemyTurnDelay > 0) {
             enemyTurnDelay--;
             if (enemyTurnDelay == 0 && enemyHp > 0 && playerHp > 0) {
+                String enemyBurnMessage = "";
+                if (enemyBurned && !enemyBurnProcessedThisTurn) {
+                    enemyHp = Math.max(0, enemyHp - 5);
+                    enemyBurnMessage = "Enemy took 5 damage from the burn!";
+                    enemyBurnProcessedThisTurn = true;
+                    lastEnemyTurnMessage = enemyBurnMessage;
+                    battleMessage = enemyBurnMessage;
+                    moveInfoText.setText(battleMessage);
+                    textBoxTimer = 240;
+                    if (enemyHp <= 0) {
+                        enemyTurnPending = false;
+                        startResultScreenDelay();
+                        battleMessage = enemyBurnMessage + "\n" + battleMessage;
+                        moveInfoText.setText(battleMessage);
+                        return;
+                    }
+                    enemyTurnDelay = BURN_MESSAGE_DELAY;
+                    return;
+                }
                 Move enemyMove = enemyMoves[random.nextInt(enemyMoves.length)];
-                battleMessage += "\n" + useMove(enemyMove, false);
+                String enemyMoveMessage = useMove(enemyMove, false);
+                enemyTurnPending = false;
+                lastEnemyTurnMessage = enemyBurnMessage.isEmpty()
+                        ? enemyMoveMessage
+                        : enemyBurnMessage + "\n" + enemyMoveMessage;
+                if (!enemyBurnMessage.isEmpty()) {
+                    battleMessage = enemyBurnMessage;
+                }
+                battleMessage += "\n" + enemyMoveMessage;
+                moveInfoText.setText(battleMessage);
+                textBoxTimer = 240;
+                startResultScreenDelay();
+                if (!enemyBurnMessage.isEmpty() && (enemyHp <= 0 || playerHp <= 0)) {
+                    battleMessage = enemyBurnMessage + "\n" + battleMessage;
+                    moveInfoText.setText(battleMessage);
+                }
+                enemyBurnProcessedThisTurn = false;
+                if (playerHp <= 0) {
+                    return;
+                }
+                if (playerBurned) {
+                    playerBurnMessageDelay = BURN_MESSAGE_DELAY;
+                    return;
+                }
+            }
+        }
+
+        if (playerBurnMessageDelay > 0) {
+            playerBurnMessageDelay--;
+            return;
+        }
+
+        if (enemyTurnDelay == 0 && !playerBurnProcessedThisTurn) {
+            playerBurnProcessedThisTurn = true;
+            if (playerBurned == true) {
+                playerHp = Math.max(0, playerHp - 5);
+                playerTurnBurnMessage = "You took 5 damage from the burn!";
+                battleMessage = (lastEnemyTurnMessage.isEmpty()
+                        ? ""
+                        : lastEnemyTurnMessage + "\n") + playerTurnBurnMessage;
                 moveInfoText.setText(battleMessage);
                 textBoxTimer = 240;
                 startResultScreenDelay();
                 if (playerHp <= 0) {
+                    battleMessage = playerTurnBurnMessage + "\n" + battleMessage;
+                    moveInfoText.setText(battleMessage);
                     return;
                 }
             }
@@ -335,16 +559,53 @@ public class EncounterScreen extends Screen {
             if (enemyTurnDelay == 0 && enemyHp > 0 && playerHp > 0) {
                 battleMenuItemSelected = battleCurrentMenuItemY * 2 + battleCurrentMenuItemX;
 
-                recordMoveUse(battleMenuItemSelected);
-                battleMessage = useMove(moves[battleMenuItemSelected], true);
-                if (enemyHp > 0) {
+                Move selectedMove = moves[battleMenuItemSelected];
+                String turnBurnMessage = playerTurnBurnMessage;
+                if (allMovesOutOfUses()) {
+                    battleMessage = "\nAll of your moves are out of uses!";
+                    damageRoll = (int)(Math.random() * 10) - 5;
+                    if ((((20 + damageRoll) + playerAttackBuff) - enemyDefenseBuff) < 0) {
+                        enemyHp = Math.max(0, enemyHp - 1);
+                    } else {
+                        enemyHp = Math.max(0, enemyHp - (((20 + damageRoll) + playerAttackBuff) - enemyDefenseBuff));
+                    }
+                    battleMessage += "\nStruggle hit for " + (((20 + damageRoll) + playerAttackBuff) - enemyDefenseBuff) + " damage!";
                     enemyTurnDelay = 60;
+                    enemyTurnPending = true;
+                    enemyBurnProcessedThisTurn = false;
+                    playerBurnProcessedThisTurn = false;
+                } else if (selectedMove.getUses() - getUsedMoves(battleMenuItemSelected) <= 0) {
+                    battleMessage = (turnBurnMessage.isEmpty()
+                            ? ""
+                            : (lastEnemyTurnMessage.isEmpty()
+                                    ? ""
+                                    : lastEnemyTurnMessage + "\n") + turnBurnMessage + "\n")
+                            + selectedMove.getName() + " has no uses left!";
+                } else {
+                    recordMoveUse(battleMenuItemSelected);
+                    battleMessage = (turnBurnMessage.isEmpty()
+                            ? ""
+                            : (lastEnemyTurnMessage.isEmpty()
+                                    ? ""
+                                    : lastEnemyTurnMessage + "\n") + turnBurnMessage + "\n")
+                            + useMove(selectedMove, true);
+                    playerTurnBurnMessage = "";
+                    if (enemyHp > 0) {
+                        enemyTurnDelay = 60;
+                        enemyTurnPending = true;
+                        enemyBurnProcessedThisTurn = false;
+                        playerBurnProcessedThisTurn = false;
+                    }
                 }
 
                 moveInfoText.setText(battleMessage);
                 textBoxTimer = 240;
                 startResultScreenDelay();
                 if (enemyHp <= 0) {
+                    if (!turnBurnMessage.isEmpty()) {
+                        battleMessage = turnBurnMessage + "\n" + battleMessage;
+                        moveInfoText.setText(battleMessage);
+                    }
                     return;
                 }
             }
@@ -440,19 +701,38 @@ public class EncounterScreen extends Screen {
                 label.draw(graphicsHandler);
             }
         }
-        boolean showingMoveDescription = battleMenuItemSelected == -1 && resultScreenTimer <= 0;
+        boolean showingMoveDescription = battleMenuItemSelected == -1
+                && resultScreenTimer <= 0 && playerTurnBurnMessage.isEmpty();
+        String textToDisplay = battleMessage;
         if (showingMoveDescription) {
             int selectedMoveIndex = battleCurrentMenuItemY * 2 + battleCurrentMenuItemX;
             Move selectedMove = moves[selectedMoveIndex];
-            moveInfoText.setText(wrapText(selectedMove.getDescription() + "\nUses Left: "
-                    + (selectedMove.getUses() - getUsedMoves(selectedMoveIndex)),
-                    g.getFontMetrics(moveInfoText.getFont()), 370));
+            textToDisplay = selectedMove.getDescription() + "\nUses Left: "
+                    + (selectedMove.getUses() - getUsedMoves(selectedMoveIndex));
         }
-        if(showingMoveDescription || battleMenuItemSelected != -1 || resultScreenTimer > 0){
+        if(showingMoveDescription || !playerTurnBurnMessage.isEmpty()
+                || battleMenuItemSelected != -1 || resultScreenTimer > 0){
             graphicsHandler.drawFilledRectangleWithBorder(20, 395, 400, 125, new Color(30,30,60), Color.white, 3);
+            moveInfoText.setText(fitTextToBox(textToDisplay, g));
             moveInfoText.drawWithParsedNewLines(graphicsHandler, 6);
         }
         //instructions.draw(graphicsHandler);
+    }
+
+    private String fitTextToBox(String text, Graphics2D graphics) {
+        int fontSize = 22;
+        while (true) {
+            Font font = new Font("Arial", Font.PLAIN, fontSize);
+            FontMetrics metrics = graphics.getFontMetrics(font);
+            String wrappedText = wrapText(text, metrics, 370);
+            int maxLines = 1 + Math.max(0,
+                    (105 - metrics.getHeight()) / (fontSize + 6));
+            if (wrappedText.split("\n", -1).length <= maxLines || fontSize == 1) {
+                moveInfoText.setFont(font);
+                return wrappedText;
+            }
+            fontSize--;
+        }
     }
 
     private String wrapText(String text, FontMetrics metrics, int maxWidth) {
@@ -467,11 +747,24 @@ public class EncounterScreen extends Screen {
                 if (word.isEmpty()) {
                     continue;
                 }
-                String candidate = line.length() == 0 ? word : line + " " + word;
-                if (line.length() > 0 && metrics.stringWidth(candidate) > maxWidth) {
+                if (line.length() > 0 && metrics.stringWidth(line + " " + word) > maxWidth) {
                     wrappedText.append(line).append('\n');
                     line.setLength(0);
-                } else if (line.length() > 0) {
+                }
+                while (metrics.stringWidth(word) > maxWidth) {
+                    int splitIndex = 1;
+                    while (splitIndex < word.length()
+                            && metrics.stringWidth(word.substring(0, splitIndex + 1)) <= maxWidth) {
+                        splitIndex++;
+                    }
+                    if (line.length() > 0) {
+                        wrappedText.append(line).append('\n');
+                        line.setLength(0);
+                    }
+                    wrappedText.append(word, 0, splitIndex).append('\n');
+                    word = word.substring(splitIndex);
+                }
+                if (line.length() > 0) {
                     line.append(' ');
                 }
                 line.append(word);

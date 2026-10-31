@@ -2,13 +2,15 @@ package Level;
 
 import Battle.CureWounds;
 import Battle.Move;
-import Battle.SacredFlame;
+import Battle.BlindingLight;
 import Battle.Slash;
 import Battle.Hawkeye;
 import Battle.Brace;
-import Battle.Test3;
-import Battle.Test4;
+import Battle.Taunt;
+import Battle.SacredFlame;
 import Battle.VigorUp;
+import Battle.Slimeball;
+import Battle.Haymaker;
 import java.awt.Color;
 import java.util.ArrayList;
 
@@ -23,8 +25,9 @@ import Utils.Direction;
 
 public abstract class Player extends GameObject {
     private final Move[] availableMoves = {
-            new Slash(), new SacredFlame(), new VigorUp(), new CureWounds(),
-            new Hawkeye(), new Brace(), new Test3(), new Test4()
+            new Slash(), new BlindingLight(), new VigorUp(), new CureWounds(),
+            new Hawkeye(), new Brace(), new Taunt(), new SacredFlame(), new Slimeball(), 
+            new Haymaker()
     };
     private final Move[] equippedMoves = {
             availableMoves[0], availableMoves[1], availableMoves[2], availableMoves[3]
