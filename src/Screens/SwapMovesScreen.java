@@ -202,11 +202,13 @@ public class SwapMovesScreen extends Screen {
                     moveFont, Color.white);
         }
 
+        drawMoveDescription(graphicsHandler, graphics, equippedMoves[selectedMoveIndex]);
+
         String swapInstructions = "WASD: Select a slot    Enter: Choose a move    Escape: Return";
         FontMetrics instructionsMetrics = graphics.getFontMetrics(instructionsFont);
         graphicsHandler.drawString(swapInstructions,
                 (ScreenManager.getScreenWidth() - instructionsMetrics.stringWidth(swapInstructions)) / 2,
-                445, instructionsFont, Color.white);
+                ScreenManager.getScreenHeight() - 24, instructionsFont, Color.white);
     }
 
     private void drawAvailableMoves(GraphicsHandler graphicsHandler, Graphics2D graphics, Font titleFont,
@@ -260,10 +262,45 @@ public class SwapMovesScreen extends Screen {
             }
         }
 
+        drawMoveDescription(graphicsHandler, graphics, availableMoves[selectedAvailableMoveIndex]);
+
         String instructions = "WASD: Select a move    Enter: Equip    Escape: Back";
         FontMetrics instructionsMetrics = graphics.getFontMetrics(instructionsFont);
         graphicsHandler.drawString(instructions,
                 (ScreenManager.getScreenWidth() - instructionsMetrics.stringWidth(instructions)) / 2,
                 ScreenManager.getScreenHeight() - 24, instructionsFont, Color.white);
+    }
+
+    private void drawMoveDescription(GraphicsHandler graphicsHandler, Graphics2D graphics, Move move) {
+        Font descriptionFont = new Font("Arial", Font.PLAIN, 16);
+        FontMetrics descriptionMetrics = graphics.getFontMetrics(descriptionFont);
+        String[] descriptionLines = wrapText(move.getDescription(), descriptionMetrics, 740);
+        int lineY = 520;
+        for (String line : descriptionLines) {
+            graphicsHandler.drawString(line,
+                    (ScreenManager.getScreenWidth() - descriptionMetrics.stringWidth(line)) / 2,
+                    lineY, descriptionFont, Color.lightGray);
+            lineY += descriptionMetrics.getHeight();
+        }
+    }
+
+    private String[] wrapText(String text, FontMetrics metrics, int maxWidth) {
+        java.util.List<String> lines = new java.util.ArrayList<>();
+        StringBuilder line = new StringBuilder();
+        for (String word : text.split("\\s+")) {
+            String candidate = line.length() == 0 ? word : line + " " + word;
+            if (line.length() > 0 && metrics.stringWidth(candidate) > maxWidth) {
+                lines.add(line.toString());
+                line.setLength(0);
+            }
+            if (line.length() > 0) {
+                line.append(' ');
+            }
+            line.append(word);
+        }
+        if (line.length() > 0) {
+            lines.add(line.toString());
+        }
+        return lines.toArray(new String[0]);
     }
 }
