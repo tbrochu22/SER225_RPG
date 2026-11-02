@@ -33,6 +33,15 @@ public abstract class Player extends GameObject {
             availableMoves[0], availableMoves[1], availableMoves[2], availableMoves[3]
     };
 
+    //stats and levels
+    public static final int baseHp = 100;
+    public static final int baseAttack = 10;
+    public static final int hpPerLevel = 10;
+    public static final int attackPerLevel = 2;
+    protected int level = 1;
+    protected int exp = 0;
+    protected int maxHp = baseHp;
+    protected int attack = baseAttack;
     // values that affect player movement
     // these should be set in a subclass
     protected float walkSpeed = 0;
@@ -223,6 +232,25 @@ public abstract class Player extends GameObject {
 
     public Key getInteractKey() { return INTERACT_KEY; }
     public Move[] getEquippedMoves() { return equippedMoves.clone(); }
+    public int getLevel() { return level; };
+    public int getExp() {return exp; }
+    public int getMaxHp() { return maxHp; };
+    public int getAttack() { return attack; }
+
+    public int getExpToNextLevel() { return level * 50; }
+    
+    public int gainExp(int amount){
+        exp += amount;
+        int levelsGained = 0;
+        while(exp >= getExpToNextLevel()){
+            exp -= getExpToNextLevel();
+            level++;
+            maxHp += hpPerLevel;
+            attack += attackPerLevel;
+            levelsGained ++;
+        }
+        return levelsGained;
+    }
     public Move[] getAvailableMoves() { return availableMoves.clone(); }
 
     public void equipMove(int moveIndex, Move move) {

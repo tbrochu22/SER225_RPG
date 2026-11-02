@@ -7,6 +7,7 @@ import SpriteFont.SpriteFont;
 import java.awt.*;
 import java.util.Random;
 import java.awt.image.BufferedImage;
+import Level.Player;
 
 // This class is for the encounter screen
 public class EncounterScreen extends Screen {
@@ -67,6 +68,15 @@ public class EncounterScreen extends Screen {
     protected Random random = new Random();
     protected BufferedImage knightBack;
     protected BufferedImage enemySprite;
+    protected int playerAttack = 10;
+    protected int enemyAttack = 10;
+    protected int expReward = 20;
+    protected boolean expAwarded;
+    protected String expMessage = "";
+    protected Move animatingMove;
+    protected boolean animatingPlayerIsUser;
+    protected int animationFrame;
+    protected boolean animatingCharge;
 
     public EncounterScreen(PlayLevelScreen playLevelScreen, Move[] enemyMoves) {
         this.playLevelScreen = playLevelScreen;
@@ -80,21 +90,30 @@ public class EncounterScreen extends Screen {
         enemyPlaceholder.setText(mName + " will go here");
     }
 
+    // damage for one hit. attack 10 is "normal", so a level 1 player hits exactly as hard as before
+    private int calculateDamage(int power, int attackerAttack, int attackerBuff, int defenderBuff) {
+        damageRoll = (int)(Math.random() * 10) - 5;
+        int damage = (power * attackerAttack) / 10 + damageRoll + attackerBuff - defenderBuff;
+        return Math.max(1, damage);
+    }
     private String useMove(Move move, boolean playerAttacking) {
         if (random.nextInt(100) >= move.getAccuracy()) {
             return move.getName() + " missed!";
         }
+        startAnimation(move, playerAttacking);
 
         if (playerAttacking) {
             usedHaymakerPlayer = false;
             if (isChargingPlayer && playerAttacking) {
                 isChargingPlayer = false;
                 usedHaymakerPlayer = true;
+                startAnimation(new Haymaker(), true);
                 enemyHp = Math.max(0, enemyHp - (((80 + damageRoll) + playerAttackBuff) - enemyDefenseBuff));
                 return "Haymaker hit for " + (((80 + damageRoll) + playerAttackBuff) - enemyDefenseBuff) + " damage!";
             }
             if (playerStunned == true) {
                 if (random.nextInt(100) < stunChance) {
+                    animatingMove = null;
                     return "Player is stunned!";
                 } else {
                     playerStunned = false;
@@ -108,16 +127,12 @@ public class EncounterScreen extends Screen {
                 if (move.getType().equals("Charge Attack") && !usedHaymakerPlayer) {
                     if (!isChargingPlayer) {
                         isChargingPlayer = true;
+                        startChargeAnimation(move, true);
                         return move.getName() + " is charging!";
                     }
                 }
-                damageRoll = (int)(Math.random() * 10) - 5;
-                damageCalcPlayer = (((move.getPower() + damageRoll) + playerAttackBuff) - enemyDefenseBuff);
-                if (damageCalcPlayer < 0) {
-                    enemyHp = Math.max(0, enemyHp - 1);
-                } else {
-                    enemyHp = Math.max(0, enemyHp - damageCalcPlayer);
-                }
+                damageCalcPlayer = calculateDamage(move.getPower(), playerAttack, playerAttackBuff, enemyDefenseBuff);
+                enemyHp = Math.max(0, enemyHp - damageCalcPlayer);
 
                 if (move.getType().equals("Electric Attack")) {
                     if (random.nextInt(100) < stunChance) {
@@ -162,11 +177,13 @@ public class EncounterScreen extends Screen {
             if (isChargingEnemy && !playerAttacking) {
                 isChargingEnemy = false;
                 usedHaymakerEnemy = true;
+                startAnimation(new Haymaker(), false);
                 playerHp = Math.max(0, playerHp - (((80 + damageRoll) + enemyAttackBuff) - playerDefenseBuff));
                 return "Haymaker hit for " + (((80 + damageRoll) + enemyAttackBuff) - playerDefenseBuff) + " damage!";
             }
             if (enemyStunned == true) {
                 if (random.nextInt(100) < stunChance) {
+                    animatingMove = null;
                     return "Enemy is stunned!";
                 } else {
                     enemyStunned = false;
@@ -180,16 +197,12 @@ public class EncounterScreen extends Screen {
                 if (move.getType().equals("Charge Attack") && !usedHaymakerEnemy) {
                     if (!isChargingEnemy) {
                         isChargingEnemy = true;
+                        startChargeAnimation(move, false);
                         return move.getName() + " is charging!";
                     }
                 }
-                damageRoll = (int)(Math.random() * 10) - 5;
-                damageCalcEnemy = (((move.getPower() + damageRoll) + enemyAttackBuff) - playerDefenseBuff);
-                if (damageCalcPlayer < 0) {
-                    playerHp = Math.max(0, playerHp - 1);
-                } else {
-                    playerHp = Math.max(0, playerHp - damageCalcEnemy);
-                }
+                damageCalcEnemy = calculateDamage(move.getPower(), enemyAttack, enemyAttackBuff, playerDefenseBuff);
+                playerHp = Math.max(0, playerHp - damageCalcEnemy);
                 if (move.getType().equals("Electric Attack")) {
                     if (random.nextInt(100) < stunChance) {
                         moveStun = true;
@@ -326,6 +339,17 @@ public class EncounterScreen extends Screen {
         }
     }
 
+    private void startAnimation(Move move, boolean playerIsUser){
+        animatingCharge = false;
+        animatingMove = move;
+        animatingPlayerIsUser = playerIsUser;
+        animationFrame = 0;
+    }
+
+    private void startChargeAnimation(Move move, boolean playerIsUser) {
+    startAnimation(move, playerIsUser);
+    animatingCharge = true;
+    }
     private void recordMoveUse(int moveIndex) {
         switch (moveIndex) {
             case 0:
@@ -379,8 +403,13 @@ public class EncounterScreen extends Screen {
         enemyLabel = new SpriteFont("Enemy", ScreenManager.getScreenWidth() - 85, 45, "Arial", 24, Color.white);
         enemyHp = 100;
         enemyMaxHp = 100;
-        playerHp = 100;
-        playerMaxHp = 100; 
+        Player player = playLevelScreen.getPlayer();
+        playerMaxHp = player.getMaxHp();
+        playerHp = playerMaxHp;
+        playerAttack = player.getAttack();
+        playerLabel.setText("Player  Lv " + player.getLevel());
+        expAwarded = false;
+        expMessage = "";
         usedMoves1 = 0;
         usedMoves2 = 0;
         usedMoves3 = 0;
@@ -416,10 +445,17 @@ public class EncounterScreen extends Screen {
                 buttonLabels[row * 2 + col] = label;
             }
         }
+        animatingMove = null;
     }
 
     @Override
     public void update() {
+        if(animatingMove != null){
+            animationFrame ++;
+            if(animationFrame >= Move.getAnimationLength()){
+                animatingMove = null;
+            }
+        }
         if (Keyboard.isKeyUp(Key.ENTER)) {
             keyLocker.unlockKey(Key.ENTER);
         }
@@ -431,6 +467,9 @@ public class EncounterScreen extends Screen {
             return;
         }
         if (enemyHp <= 0 || playerHp <= 0) {
+            if(!expAwarded){
+                awardExp();
+            }
             if (resultScreenTimer > 0) {
                 keyLocker.lockKey(Key.ENTER);
                 resultScreenTimer--;
@@ -441,6 +480,9 @@ public class EncounterScreen extends Screen {
                 playLevelScreen.returnFromBossFight(playerHp <= 0);
                 playLevelScreen.returnFromEncounter(playerHp <= 0);
             }
+            return;
+        }
+        if(animatingMove != null){
             return;
         }
 
@@ -619,6 +661,24 @@ public class EncounterScreen extends Screen {
             }
     }
 
+        // called once when the battle ends. full EXP for a win, a quarter for a loss
+    private void awardExp() {
+        expAwarded = true;
+        Player player = playLevelScreen.getPlayer();
+        int earned = enemyHp <= 0 ? expReward : expReward / 4;
+        int oldMaxHp = player.getMaxHp();
+        int oldAttack = player.getAttack();
+        int levelsGained = player.gainExp(earned);
+
+        expMessage = "+" + earned + " EXP";
+        if (levelsGained > 0) {
+            expMessage += "\nLevel up! You are now level " + player.getLevel() + "!"
+                    + "\nMax HP " + oldMaxHp + " -> " + player.getMaxHp()
+                    + "   Attack " + oldAttack + " -> " + player.getAttack();
+        }
+        expMessage += "\nEXP: " + player.getExp() + " / " + player.getExpToNextLevel();
+    }
+
     private void startResultScreenDelay() {
         if (enemyHp <= 0 || playerHp <= 0) {
             resultScreenTimer = RESULT_SCREEN_DELAY;
@@ -669,12 +729,55 @@ public class EncounterScreen extends Screen {
         playerLabel.draw(graphicsHandler);
         enemyLabel.draw(graphicsHandler);
         //playerPlaceholder.draw(graphicsHandler);
-        graphicsHandler.drawImage(knightBack, 115, 315, 160, 160);
-        if(enemySprite != null){
-        graphicsHandler.drawImage(enemySprite, 500, 150, 192, 192);
-        }else{
+        int knightX = 115, knightY = 315, enemyX = 500, enemyY = 150;
+boolean hideKnight = false, hideEnemy = false;
+
+if (animatingMove != null && animatingMove.getPower() > 0 && !animatingCharge) {
+    double p = (double) animationFrame / Move.getAnimationLength();
+
+    // attacker: forward for the first 15%, back by 30%
+    double lunge = p < 0.15 ? p / 0.15 : (p < 0.3 ? (0.3 - p) / 0.15 : 0);
+    int dx = (int) (30 * lunge);
+
+    // target: shake left/right and blink between 30% and 70%
+    boolean hit = p > 0.3 && p < 0.7;
+    int shake = hit ? (animationFrame % 4 < 2 ? 6 : -6) : 0;
+    boolean blink = hit && animationFrame % 6 < 2;
+
+    if (animatingPlayerIsUser) {
+        knightX += dx;  knightY -= dx / 2;   // up and right, toward the enemy
+        enemyX += shake; hideEnemy = blink;
+    } else {
+        enemyX -= dx;   enemyY += dx / 2;    // down and left, toward the knight
+        knightX += shake; hideKnight = blink;
+    }
+}
+
+if (!hideKnight) {
+    graphicsHandler.drawImage(knightBack, knightX, knightY, 160, 160);
+}
+if (!hideEnemy) {
+    if (enemySprite != null) {
+        graphicsHandler.drawImage(enemySprite, enemyX, enemyY, 192, 192);
+    } else {
         enemyPlaceholder.draw(graphicsHandler);
+    }
+}
+        //for the animations
+        Stroke oldStroke = g.getStroke();
+        Composite oldComposite = g.getComposite();
+        if (animatingMove != null) {
+        int px = 195, py = 395, ex = 596, ey = 246;
+        int ux = animatingPlayerIsUser ? px : ex, uy = animatingPlayerIsUser ? py : ey;
+        int tx = animatingPlayerIsUser ? ex : px, ty = animatingPlayerIsUser ? ey : py;
+        if (animatingCharge) {
+        animatingMove.drawChargeAnimation(g, animationFrame, ux, uy);
+        } else {
+        animatingMove.drawAnimation(g, animationFrame, ux, uy, tx, ty);
         }
+}
+g.setStroke(oldStroke);
+g.setComposite(oldComposite);
         //for the buttons
         for(int row = 0; row < 2; row ++){
             for(int col = 0; col < 2; col ++){
@@ -791,8 +894,19 @@ public class EncounterScreen extends Screen {
                 screenHeight / 2, titleFont, Color.green);
         graphicsHandler.drawString(prompt, (screenWidth - promptMetrics.stringWidth(prompt)) / 2,
                 screenHeight / 2 + 50, promptFont, Color.white);
+        drawExpMessage(graphicsHandler, screenHeight / 2 + 100);
     }
 
+        // draws expMessage centered, one line at a time, starting at y
+    private void drawExpMessage(GraphicsHandler graphicsHandler, int y) {
+        Font expFont = new Font("Arial", Font.PLAIN, 22);
+        FontMetrics metrics = graphicsHandler.getGraphics().getFontMetrics(expFont);
+        for (String line : expMessage.split("\n")) {
+            int x = (ScreenManager.getScreenWidth() - metrics.stringWidth(line)) / 2;
+            graphicsHandler.drawString(line, x, y, expFont, Color.yellow);
+            y += 30;
+        }
+    }
     private void drawLoseScreen(GraphicsHandler graphicsHandler) {
         int screenWidth = ScreenManager.getScreenWidth();
         int screenHeight = ScreenManager.getScreenHeight();
@@ -810,5 +924,6 @@ public class EncounterScreen extends Screen {
                 screenHeight / 2, titleFont, Color.red);
         graphicsHandler.drawString(prompt, (screenWidth - promptMetrics.stringWidth(prompt)) / 2,
                 screenHeight / 2 + 50, promptFont, Color.white);
+        drawExpMessage(graphicsHandler, screenHeight / 2 + 100);
     }
 }
