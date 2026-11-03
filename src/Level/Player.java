@@ -11,6 +11,7 @@ import Battle.SacredFlame;
 import Battle.VigorUp;
 import Battle.Slimeball;
 import Battle.Haymaker;
+import Battle.HighJumpKick;
 import java.awt.Color;
 import java.util.ArrayList;
 
@@ -27,7 +28,7 @@ public abstract class Player extends GameObject {
     private final Move[] availableMoves = {
             new Slash(), new BlindingLight(), new VigorUp(), new CureWounds(),
             new Hawkeye(), new Brace(), new Taunt(), new SacredFlame(), new Slimeball(), 
-            new Haymaker()
+            new Haymaker(), new HighJumpKick()
     };
     private final Move[] equippedMoves = {
             availableMoves[0], availableMoves[1], availableMoves[2], availableMoves[3]

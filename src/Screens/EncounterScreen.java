@@ -98,6 +98,15 @@ public class EncounterScreen extends Screen {
     }
     private String useMove(Move move, boolean playerAttacking) {
         if (random.nextInt(100) >= move.getAccuracy()) {
+            if (move.getType().equals("Crash Attack")) {
+                // missing a crash move hurts the user instead
+                if (playerAttacking) {
+                    playerHp = Math.max(0, playerHp - move.getEffect());
+                } else {
+                    enemyHp = Math.max(0, enemyHp - move.getEffect());
+                }
+                return move.getName() + " missed! The user crashed and took " + move.getEffect() + " damage!";
+            }
             return move.getName() + " missed!";
         }
         startAnimation(move, playerAttacking);
