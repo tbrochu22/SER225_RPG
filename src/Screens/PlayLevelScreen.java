@@ -164,7 +164,7 @@ public class PlayLevelScreen extends Screen implements GameListener {
                 winScreen.update();
                 break;
             case ENCOUNTER:
-                encounterScreen.update();
+                currentFight.update();
                 break;
             // if a fight has been triggered, bring up the cutaway screen
             case CUTAWAY:
@@ -230,7 +230,7 @@ public class PlayLevelScreen extends Screen implements GameListener {
                 winScreen.draw(graphicsHandler);
                 break;
             case ENCOUNTER:
-                encounterScreen.draw(graphicsHandler);
+                currentFight.draw(graphicsHandler);
             break;
             case CUTAWAY:
                 //cutawayScreen.draw(graphicsHandler);
