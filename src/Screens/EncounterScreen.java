@@ -93,7 +93,7 @@ public class EncounterScreen extends Screen {
     // damage for one hit. attack 10 is "normal", so a level 1 player hits exactly as hard as before
     private int calculateDamage(int power, int attackerAttack, int attackerBuff, int defenderBuff) {
         damageRoll = (int)(Math.random() * 10) - 5;
-        int damage = (power * attackerAttack) / 10 + damageRoll + attackerBuff - defenderBuff;
+        int damage = (((((power * attackerAttack) / 10) + damageRoll) + attackerBuff) - defenderBuff);
         return Math.max(1, damage);
     }
     private String useMove(Move move, boolean playerAttacking) {
