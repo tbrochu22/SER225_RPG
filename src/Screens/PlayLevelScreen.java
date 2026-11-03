@@ -214,6 +214,8 @@ public class PlayLevelScreen extends Screen implements GameListener {
     @Override
     public void onFight() {
         // when this method is called within the game, it signals that a boss fight has been triggered
+        currentBoss = (map == secondMap) ? 2 : 1;
+        startBossFight(currentBoss == 1 ? slimeBossScreen : slimeBossScreen2);
         MusicPlayer.playMusic("src/music/battle-music.wav");
         // reset HP/menus so a rematch (after losing) starts fresh instead of reusing the last fight's state
         //cutawayScreen.initialize();
@@ -609,9 +611,11 @@ enemyCooldown = 60;
             if(currentTile.x == flowerTile.x && currentTile.y == flowerTile.y){
                 if (currentTile.x != lastTile.x || currentTile.y != lastTile.y) {
                     if(random.nextFloat() <= 1f){
-                    encounterScreen.setMonsterName(monsterNameStrings[random.nextInt(monsterNameStrings.length)]);
+                    currentBoss = 0;
+                    //encounterScreen.setMonsterName(monsterNameStrings[random.nextInt(monsterNameStrings.length)]);
+                    startBossFight(randomBosses[random.nextInt(randomBosses.length)]);
                     MusicPlayer.playMusic("src/music/battle-music.wav");
-                    playLevelScreenState = PlayLevelScreenState.ENCOUNTER;
+                    //playLevelScreenState = PlayLevelScreenState.ENCOUNTER;
                     }
                 }
             }
