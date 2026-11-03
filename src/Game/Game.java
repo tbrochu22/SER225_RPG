@@ -2,7 +2,7 @@ package Game;
 
 import Engine.GameWindow;
 import Engine.ScreenManager;
-import Music.MusicPlayer;
+import javax.swing.SwingUtilities;
 
 /*
  * The game starts here
@@ -13,17 +13,15 @@ import Music.MusicPlayer;
 public class Game {
 
     public static void main(String[] args) {
-        new Game();
+        SwingUtilities.invokeLater(() -> {
+            new Game();
+        });
     }
 
     public Game() {
         GameWindow gameWindow = new GameWindow();
         ScreenManager screenManager = gameWindow.getScreenManager();
         screenManager.setCurrentScreen(new ScreenCoordinator());
-        MusicPlayer music = new MusicPlayer();
-        String musicPath = "src/music/Inductance.wav";
-        // Start music
-        music.playMusic(musicPath);
         gameWindow.startGame();
     }
 }

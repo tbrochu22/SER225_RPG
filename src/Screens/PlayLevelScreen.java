@@ -1,28 +1,29 @@
 package Screens;
 
 import Battle.Bite;
-import Battle.VampBite;
-import Battle.Move;
-import Battle.Roar;
-import Battle.Scratch;
-import Battle.Hawkeye;
 import Battle.Brace;
 import Battle.Growl;
+import Battle.Hawkeye;
 import Battle.Haymaker;
-import Battle.Slimeball;
+import Battle.HighJumpKick;
 import Battle.Honeycomb;
-import Battle.Taunt;
+import Battle.Move;
+import Battle.Roar;
 import Battle.SacredFlame;
+import Battle.Scratch;
+import Battle.Slimeball;
+import Battle.Taunt;
+import Battle.VampBite;
 import Battle.electricBite;
 import Engine.GraphicsHandler;
 import Engine.Screen;
 import EnhancedMapTiles.Rflower;
 import Game.GameState;
-import GameObject.Rectangle;
 import Game.ScreenCoordinator;
+import GameObject.Rectangle;
 import Level.*;
-import Maps.RockyPathMap;
 import Maps.PyramidMap;
+import Maps.RockyPathMap;
 import Maps.SecondMap;
 import Maps.ThirdMap;
 import Music.MusicPlayer;
@@ -32,10 +33,7 @@ import Utils.Direction;
 import Utils.Point;
 import java.util.ArrayList;
 import java.util.Random;
-import NPCs.RoamingEnemy;
-import Battle.HighJumpKick;
 
-// This class is for when the RPG game is actually being played
 public class PlayLevelScreen extends Screen implements GameListener {
     protected ScreenCoordinator screenCoordinator;
     protected Map map;
@@ -101,6 +99,7 @@ public class PlayLevelScreen extends Screen implements GameListener {
         thirdMap = null;
         map = rockyPathMap;
         map.setFlagManager(flagManager);
+        playMapMusic();
         flowers = new ArrayList<>();
         for(EnhancedMapTile tile: map.getEnhancedMapTiles()){
             if(tile instanceof Rflower){
@@ -270,7 +269,7 @@ public class PlayLevelScreen extends Screen implements GameListener {
 
     public void endCutaway() {
         // returns control back to the map/player once the cutaway screen is dismissed
-        MusicPlayer.playMusic("src/music/Inductance.wav");
+        playMapMusic();
         playLevelScreenState = PlayLevelScreenState.RUNNING;
     }
 
@@ -495,6 +494,14 @@ public class PlayLevelScreen extends Screen implements GameListener {
             }
         }
         lastTile = map.getTileIndexByPosition(player.getX(), player.getY());
+
+        // Change background music based on the map
+        if (map == rockyPathMap) {
+            MusicPlayer.playMusic("src/music/Inductance.wav");
+        } 
+        else if (map == secondMap) {
+            MusicPlayer.playMusic("src/music/mfcc-game-game-music-603130.wav");
+        }
     }
 
     @Override
@@ -576,7 +583,7 @@ public class PlayLevelScreen extends Screen implements GameListener {
             currentRoamingEnemy = null;
         }
 enemyCooldown = 60;
-        MusicPlayer.playMusic("src/music/Inductance.wav");
+        playMapMusic();
         playLevelScreenState = PlayLevelScreenState.RUNNING;
 
     }
@@ -622,5 +629,14 @@ enemyCooldown = 60;
         }
         lastTile = map.getTileIndexByPosition(player.getX(), player.getY());
         //System.out.println(currentTile + " " + flowerTile);
+    }
+
+    private void playMapMusic() {
+        if (map == rockyPathMap) {
+            MusicPlayer.playMusic("src/music/Inductance.wav");
+        }
+        else if (map == secondMap) {
+            MusicPlayer.playMusic("src/music/mfcc-game-game-music-603130.wav");
+        }
     }
 }

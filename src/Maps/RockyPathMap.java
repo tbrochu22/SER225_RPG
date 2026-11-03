@@ -5,8 +5,12 @@ import EnhancedMapTiles.Deodorant;
 import EnhancedMapTiles.Flower;
 import EnhancedMapTiles.Gift;
 import EnhancedMapTiles.GlassEye;
+import EnhancedMapTiles.House;
+import EnhancedMapTiles.House2;
+import EnhancedMapTiles.House3;
 import EnhancedMapTiles.Rflower;
 import EnhancedMapTiles.ToyTrain;
+import EnhancedMapTiles.Tree;
 import Level.EnhancedMapTile;
 import Level.Map;
 import Level.NPC;
@@ -14,6 +18,7 @@ import Level.Trigger;
 import NPCs.Archer;
 import NPCs.Boss1;
 import NPCs.Mage;
+import NPCs.RoamingEnemy;
 import Scripts.TestMap.ArcherScript;
 import Scripts.TestMap.Boss1Script;
 import Scripts.TestMap.CookieScript;
@@ -24,7 +29,6 @@ import Scripts.TestMap.MageScript;
 import Scripts.TestMap.ToyTrainScript;
 import Tilesets.RockyTileset;
 import java.util.ArrayList;
-import NPCs.RoamingEnemy;
 
 // A rocky outdoor map with a winding dirt path cutting through it, bordered by cliff walls.
 // Mage greets the player at the start of the path, Archer says hi partway down, and Boss1 waits near the end.
@@ -42,8 +46,8 @@ public class RockyPathMap extends Map {
 
         // flowers planted in a few of the grass patches scattered around the map
         int[][] flowerSpotsR = {
-                // scattered along the path (none sit on the path itself)
-                {17, 34}, {20, 15}, {22, 27}, {23, 3}, {21, 4},
+                // scattered along the path
+                {17, 34}, {20, 15}, {22, 26}, {23, 3}, {20, 5}, {4, 30}, {1, 22}, {8, 35},
                 // flower field in the top-left grass
                 {1, 1}, {5, 1}, {2, 2}, {8, 2}, {3, 3}, {2, 4}, {12, 4}, {3, 5}, {6, 6}
         };
@@ -53,7 +57,7 @@ public class RockyPathMap extends Map {
         }
 
         int[][] flowerSpotsY = {
-                {30, 2}, {30, 4},
+                {30, 2}, {30, 4}, {6, 35}, {7, 34}, {7, 36},
                 // flower field in the top-left grass
                 {3, 1}, {11, 1}, {6, 2}, {12, 2}, {7, 3}, {8, 4}, {1, 5}, {7, 5}, {10, 6}
         };
@@ -62,11 +66,23 @@ public class RockyPathMap extends Map {
             enhancedMapTiles.add(flower);
         }
 
-        GlassEye glassEye = new GlassEye(getMapTile(13, 13).getLocation());
+        int[][] treeSpots = {
+                {18, 31}, {20, 31}, {22, 28}, {16, 28},
+                {26, 12}, {23, 14}, {21, 18}, {22, 16}, {20, 16}, {24, 12}, {24, 16}, {21, 14}, {25, 14}, {26, 16}, {26, 9}, {26, 6}, {26, 3},
+                {10, 12}, {14, 12},
+                {14, 2},
+                {19, 10}, {17, 10}, {19, 8}, {21, 6}, {17, 8},
+        };
+        for (int[] spot : treeSpots) {
+            Tree tree = new Tree(getMapTile(spot[0], spot[1]).getLocation());
+            enhancedMapTiles.add(tree);
+        }
+
+        GlassEye glassEye = new GlassEye(getMapTile(17, 15).getLocation());
         glassEye.setInteractScript(new GlassEyeScript());
         enhancedMapTiles.add(glassEye);
 
-        Cookie cookie = new Cookie(getMapTile(20, 21).getLocation());
+        Cookie cookie = new Cookie(getMapTile(15, 26).getLocation());
         cookie.setInteractScript(new CookieScript());
         cookie.setExistenceFlag("move2Unlocked");
         enhancedMapTiles.add(cookie);
@@ -84,6 +100,14 @@ public class RockyPathMap extends Map {
         gift.setExistenceFlag("hasGift");
         enhancedMapTiles.add(gift);
 
+        House house = new House(getMapTile(19, 28).getLocation());
+        enhancedMapTiles.add(house);
+
+        House2 house2 = new House2(getMapTile(12, 12).getLocation());
+        enhancedMapTiles.add(house2);
+
+        House3 house3 = new House3(getMapTile(9, 29).getLocation());
+        enhancedMapTiles.add(house3);
 
         return enhancedMapTiles;
     }
@@ -103,7 +127,7 @@ public class RockyPathMap extends Map {
         npcs.add(archer);
 
         // boss waits near the end of the path
-        Boss1 boss1 = new Boss1(3, getMapTile(25, 37).getLocation());
+        Boss1 boss1 = new Boss1(3, getMapTile(25, 36).getLocation());
         boss1.setExistenceFlag("hasBeatenBoss1");
         boss1.setInteractScript(new Boss1Script());
         npcs.add(boss1);

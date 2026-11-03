@@ -9,7 +9,6 @@ import NPCs.Nomad;
 import Scripts.SecondMap.Boss2Script;
 import Scripts.SecondMap.NomadScript;
 import Tilesets.DesertTileset;
-
 import java.util.ArrayList;
 
 // The map the player is transported to after beating Boss1 and walking off the end of the rocky path.

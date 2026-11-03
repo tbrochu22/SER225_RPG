@@ -3,9 +3,9 @@ package Engine;
 import GameObject.Rectangle;
 import SpriteFont.SpriteFont;
 import Utils.Colors;
-
-import javax.swing.*;
 import java.awt.*;
+import java.awt.image.BufferedImage;
+import javax.swing.*;
 
 /*
  * This is where the game loop process and render back buffer is setup
@@ -28,7 +28,12 @@ public class GamePanel extends JPanel {
 	private SpriteFont fpsDisplayLabel;
 	private boolean showFPS = false;
 	private int currentFPS;
-	private boolean doPaint;
+	private boolean doPaint = true;
+	private BufferedImage gameBuffer = new BufferedImage(
+		Config.GAME_WINDOW_WIDTH,
+		Config.GAME_WINDOW_HEIGHT,
+		BufferedImage.TYPE_INT_ARGB
+	);
 
 	// The JPanel and various important class instances are setup here
 	public GamePanel() {
@@ -42,7 +47,7 @@ public class GamePanel extends JPanel {
 
 		screenManager = new ScreenManager();
 
-		pauseLabel = new SpriteFont("PAUSE", 365, 280, "Arial", 24, Color.white);
+		pauseLabel = new SpriteFont("PAUSE", Config.GAME_WINDOW_WIDTH / 2 - 35, Config.GAME_WINDOW_HEIGHT / 2 - 20, "Arial", 24, Color.white);
 		pauseLabel.setOutlineColor(Color.black);
 		pauseLabel.setOutlineThickness(2.0f);
 
@@ -59,7 +64,15 @@ public class GamePanel extends JPanel {
 	// this is called later after instantiation, and will initialize screenManager
 	public void setupGame() {
 		setBackground(Colors.CORNFLOWER_BLUE);
-		screenManager.initialize(new Rectangle(getX(), getY(), getWidth(), getHeight()));
+
+		screenManager.initialize(
+			new Rectangle(
+				0,
+				0,
+				Config.GAME_WINDOW_WIDTH,
+				Config.GAME_WINDOW_HEIGHT
+			)
+		);
 	}
 
 	// this starts the timer (the game loop is started here)
@@ -127,14 +140,49 @@ public class GamePanel extends JPanel {
 		}
 	}
 
+	
 	@Override
 	protected void paintComponent(Graphics g) {
 		super.paintComponent(g);
-		if (doPaint) {
-			// every repaint call will schedule this method to be called
-			// when called, it will setup the graphics handler and then call this class's draw method
-			graphicsHandler.setGraphics((Graphics2D) g);
-			draw();
+
+		if (!doPaint) {
+			return;
 		}
+
+		// Draw the game at its original resolution
+		Graphics2D bufferGraphics = gameBuffer.createGraphics();
+
+		bufferGraphics.setColor(getBackground());
+		bufferGraphics.fillRect(
+			0,
+			0,
+			Config.GAME_WINDOW_WIDTH,
+			Config.GAME_WINDOW_HEIGHT
+		);
+
+		graphicsHandler.setGraphics(bufferGraphics);
+		draw();
+
+		bufferGraphics.dispose();
+
+		// Scale the game image to fill the entire window
+		Graphics2D screenGraphics = (Graphics2D) g.create();
+
+		screenGraphics.setRenderingHint(
+			RenderingHints.KEY_INTERPOLATION,
+			RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR
+		);
+
+		screenGraphics.drawImage(
+			gameBuffer,
+			0,
+			0,
+			getWidth(),
+			getHeight(),
+			null
+		);
+
+		screenGraphics.dispose();
 	}
+
 }
