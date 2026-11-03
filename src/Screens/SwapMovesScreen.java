@@ -120,10 +120,6 @@ public class SwapMovesScreen extends Screen {
             default:
                 return;
         }
-        if (!playLevelScreen.isMoveUnlocked(
-                playLevelScreen.getAvailableMoves()[nextIndex])) {
-            return;
-        }
         selectedAvailableMoveIndex = nextIndex;
         keyLocker.lockKey(key);
     }
