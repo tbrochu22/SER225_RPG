@@ -24,6 +24,7 @@ import Level.*;
 import Maps.RockyPathMap;
 import Maps.PyramidMap;
 import Maps.SecondMap;
+import Maps.ThirdMap;
 import Music.MusicPlayer;
 import NPCs.RoamingEnemy;
 import Players.Knight;
@@ -58,6 +59,7 @@ public class PlayLevelScreen extends Screen implements GameListener {
     protected RockyPathMap rockyPathMap;
     protected SecondMap secondMap;
     protected PyramidMap pyramidMap;
+    protected ThirdMap thirdMap;
     // which boss the current/last boss fight is against (1 = slime on the rocky path, 2 = octopus in the desert)
     protected int currentBoss;
 
@@ -88,6 +90,7 @@ public class PlayLevelScreen extends Screen implements GameListener {
         rockyPathMap = new RockyPathMap();
         secondMap = null;
         pyramidMap = null;
+        thirdMap = null;
         map = rockyPathMap;
         map.setFlagManager(flagManager);
         flowers = new ArrayList<>();
@@ -284,6 +287,17 @@ public class PlayLevelScreen extends Screen implements GameListener {
     private static final int DESERT_BOSS_EXIT_START_X = 4;
     private static final int DESERT_BOSS_EXIT_END_X = 5;
 
+    // where the player lands in the desert when coming back from the volcano map (just above the boss exit)
+    private static final int DESERT_FROM_VOLCANO_X = 4;
+    private static final int DESERT_FROM_VOLCANO_Y = 26;
+
+    // volcano map exit: the opening in the top-right wall of third_map.txt, and where the player lands coming in (just below it)
+    private static final int VOLCANO_EXIT_ROW = 0;
+    private static final int VOLCANO_EXIT_START_X = 35;
+    private static final int VOLCANO_EXIT_END_X = 36;
+    private static final int VOLCANO_ARRIVAL_X = 35;
+    private static final int VOLCANO_ARRIVAL_Y = 1;
+
     // the pyramid's doorway in the desert, and where the player lands when walking back out (just below it)
     private static final int PYRAMID_DOOR_X = 31;
     private static final int PYRAMID_DOOR_Y = 17;
@@ -327,6 +341,7 @@ public class PlayLevelScreen extends Screen implements GameListener {
             map.getTextbox().addText("Use 'E' to open the menu and equip it!");
             map.getTextbox().setIsActive(true);
             player.lock();
+            openDesertBossExit();
         }
     }
 
@@ -341,13 +356,13 @@ public class PlayLevelScreen extends Screen implements GameListener {
     }
 
     // marks Boss2 as beaten and clears the boulders blocking the end of the desert path
-    public void onBoss2Defeated() {
+    /*public void onBoss2Defeated() {
         if (!flagManager.isFlagSet("hasBeatenBoss2")) {
             flagManager.setFlag("hasBeatenBoss2");
         }
         openDesertBossExit();
     }
-
+    */
     // swaps the boulders past Boss2 for dirt path tiles (safe to call more than once)
     private void openDesertBossExit() {
         if (secondMap == null) {
@@ -410,8 +425,22 @@ public class PlayLevelScreen extends Screen implements GameListener {
                 }
                 loadMap(pyramidMap, PYRAMID_ARRIVAL_X, PYRAMID_ARRIVAL_Y, Direction.UP);
             }
-            // TODO: once there's a third map, walking through the opened exit past Boss2
-            // (DESERT_BOSS_EXIT_ROW, DESERT_BOSS_EXIT_START_X..END_X) should load it here
+            // once Boss2 is beaten, walking down through the opened exit below it goes to the volcano map
+            // (row 28 also counts so the player doesn't have to squeeze fully into the bottom row)
+            else if (flagManager.isFlagSet("hasBeatenBoss2")
+                    && currentTile.y >= DESERT_BOSS_EXIT_ROW - 1
+                    && currentTile.x >= DESERT_BOSS_EXIT_START_X && currentTile.x <= DESERT_BOSS_EXIT_END_X) {
+                if (thirdMap == null) {
+                    thirdMap = new ThirdMap();
+                }
+                loadMap(thirdMap, VOLCANO_ARRIVAL_X, VOLCANO_ARRIVAL_Y, Direction.DOWN);
+            }
+        } else if (map == thirdMap) {
+            // walking back up through the opening in the top-right wall returns to the desert, just above the boss exit
+            if (currentTile.y <= VOLCANO_EXIT_ROW
+                    && currentTile.x >= VOLCANO_EXIT_START_X && currentTile.x <= VOLCANO_EXIT_END_X) {
+                loadMap(secondMap, DESERT_FROM_VOLCANO_X, DESERT_FROM_VOLCANO_Y, Direction.UP);
+            }
         } else if (map == pyramidMap) {
             // walking down into the doorway in the bottom wall goes back out to the desert, just below the pyramid
             if (isTouchingDoorway(PYRAMID_INSIDE_DOOR_X, PYRAMID_INSIDE_DOOR_Y, false)) {
