@@ -24,6 +24,7 @@ import Scripts.TestMap.MageScript;
 import Scripts.TestMap.ToyTrainScript;
 import Tilesets.RockyTileset;
 import java.util.ArrayList;
+import NPCs.RoamingEnemy;
 
 // A rocky outdoor map with a winding dirt path cutting through it, bordered by cliff walls.
 // Mage greets the player at the start of the path, Archer says hi partway down, and Boss1 waits near the end.
@@ -106,7 +107,9 @@ public class RockyPathMap extends Map {
         boss1.setExistenceFlag("hasBeatenBoss1");
         boss1.setInteractScript(new Boss1Script());
         npcs.add(boss1);
-
+        npcs.add(new RoamingEnemy(10, getMapTile(10, 13).getLocation(), "SparkWolf.png", "Spark Wolf"));
+        npcs.add(new RoamingEnemy(11, getMapTile(27, 12).getLocation(), "ShadowBat.png", "Shadow Bat"));
+        npcs.add(new RoamingEnemy(12, getMapTile(6, 29).getLocation(), "ClawBear.png", "Claw Bear"));
         return npcs;
     }
 

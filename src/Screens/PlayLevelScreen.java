@@ -1,13 +1,18 @@
 package Screens;
 
 import Battle.Bite;
+import Battle.VampBite;
 import Battle.Move;
 import Battle.Roar;
 import Battle.Scratch;
 import Battle.Hawkeye;
 import Battle.Brace;
-import Battle.Test3;
-import Battle.Test4;
+import Battle.Growl;
+import Battle.Haymaker;
+import Battle.Slimeball;
+import Battle.Honeycomb;
+import Battle.Taunt;
+import Battle.SacredFlame;
 import Battle.electricBite;
 import Engine.GraphicsHandler;
 import Engine.Screen;
@@ -20,11 +25,13 @@ import Maps.RockyPathMap;
 import Maps.PyramidMap;
 import Maps.SecondMap;
 import Music.MusicPlayer;
+import NPCs.RoamingEnemy;
 import Players.Knight;
 import Utils.Direction;
 import Utils.Point;
 import java.util.ArrayList;
 import java.util.Random;
+import NPCs.RoamingEnemy;
 
 // This class is for when the RPG game is actually being played
 public class PlayLevelScreen extends Screen implements GameListener {
@@ -33,7 +40,6 @@ public class PlayLevelScreen extends Screen implements GameListener {
     protected Player player;
     protected PlayLevelScreenState playLevelScreenState;
     protected WinScreen winScreen;
-    protected CutawayScreen cutawayScreen;
     protected SwapMovesScreen swapMovesScreen;
     protected FlagManager flagManager;
     protected EncounterScreen encounterScreen;
@@ -41,7 +47,11 @@ public class PlayLevelScreen extends Screen implements GameListener {
     protected java.util.Random random;
     protected Utils.Point lastTile;
     protected ArrayList<Rflower> flowers;
-    protected BossScreen sparkWolfScreen, clawBearScreen;
+    protected BossScreen sparkWolfScreen, clawBearScreen, shadowBatScreen, slimeBossScreen,slimeBossScreen2;
+    protected BossScreen[] randomBosses;
+    protected BossScreen currentFight;
+    protected RoamingEnemy currentRoamingEnemy;
+    protected int enemyCooldown = 0;
 
     // each map is only built once and then reused, so going back to a map keeps its state
     // (flowers already touched, items already picked up, boulders already cleared, etc.)
@@ -72,6 +82,7 @@ public class PlayLevelScreen extends Screen implements GameListener {
         flagManager.addFlag("move3Unlocked", false);
         flagManager.addFlag("move4Unlocked", false);
         flagManager.addFlag("move5Unlocked", false);
+        flagManager.addFlag("move6Unlocked", false);
 
         // define/setup map
         rockyPathMap = new RockyPathMap();
@@ -106,14 +117,19 @@ public class PlayLevelScreen extends Screen implements GameListener {
         map.preloadScripts();
 
         winScreen = new WinScreen(this);
-        encounterScreen = new EncounterScreen(this);
+        encounterScreen = new EncounterScreen(this, new Move[] {
+                new Roar(), new Bite(), new electricBite(), new Scratch()
+        });
 
-        sparkWolfScreen = new BossScreen(this, "Spark Wolf", "SparkWolf.png", new Move[] {new electricBite(), new Roar(), new Bite(), new Scratch()});
-        clawBearScreen = new BossScreen(this, "Claw Bear", "ClawBear.png", new Move[] {new Scratch(), new Roar(), new Bite(), new Scratch()});
+        sparkWolfScreen = new BossScreen(this, "Spark Wolf", "SparkWolf.png", new Move[] {new electricBite(), new Roar(), new Growl(), new Scratch()}, 90, 9, 30);
+        clawBearScreen = new BossScreen(this, "Claw Bear", "ClawBear.png", new Move[] {new Honeycomb(), new Roar(), new Growl(), new Scratch()}, 120, 8, 35);
+        shadowBatScreen = new BossScreen(this, "ShadowBat", "ShadowBat.png", new Move[] {new VampBite(), new Roar(), new Bite(), new Scratch()}, 80, 10, 30);
+        slimeBossScreen = new BossScreen(this, "Slimeboss", "Boss1.png", new Move[] {new Slimeball(), new Growl(), new VampBite(), new Scratch()}, 150, 10, 60);
+        slimeBossScreen2 = new BossScreen(this, "Raging Slime", "Boss2.png", new Move[] {new Haymaker(), new Roar(), new VampBite(), new Slimeball()}, 220, 12, 100);       
+        randomBosses = new BossScreen[] { sparkWolfScreen, clawBearScreen, shadowBatScreen };
         lastTile = map.getTileIndexByPosition(player.getX(), player.getY());
         random = new Random();
         monsterNameStrings = new String[] {"Monster x", "Monster y", "Monster z"};
-        cutawayScreen = new CutawayScreen(this);
         swapMovesScreen = new SwapMovesScreen(this);
     }
 
@@ -125,8 +141,11 @@ public class PlayLevelScreen extends Screen implements GameListener {
                 player.update();
                 if (playLevelScreenState == PlayLevelScreenState.RUNNING) {
                     map.update(player);
+                    checkForRoamingEnemyContact();
+                    if(playLevelScreenState == playLevelScreenState.RUNNING){
                     encounterChance();
                     checkForMapExit();
+                    }
                 }
                 break;
             // if level has been completed, bring up level cleared screen
@@ -138,7 +157,7 @@ public class PlayLevelScreen extends Screen implements GameListener {
                 break;
             // if a fight has been triggered, bring up the cutaway screen
             case CUTAWAY:
-                cutawayScreen.update();
+                //cutawayScreen.update();
                 break;
             case SWAP_MOVES:
                 swapMovesScreen.update();
@@ -146,7 +165,34 @@ public class PlayLevelScreen extends Screen implements GameListener {
         }
     }
 
-    
+    private void checkForRoamingEnemyContact() {
+    // don't start a fight in the middle of a conversation
+    if (enemyCooldown > 0) {
+        enemyCooldown--;
+        return;
+    }
+    if (map.getTextbox().isActive()) {
+        return;
+    }
+    for (NPC npc : map.getActiveNPCs()) {
+        if (npc instanceof RoamingEnemy && npc.touching(player)) {
+            currentRoamingEnemy = (RoamingEnemy) npc;
+            currentBoss = 0;   // see the note below
+            startBossFight(getBattleScreenFor(currentRoamingEnemy.getEnemyName()));
+            MusicPlayer.playMusic("src/music/battle-music.wav");
+            return;
+        }
+    }
+    }
+
+    private BossScreen getBattleScreenFor(String enemyName) {
+    switch (enemyName) {
+        case "Spark Wolf": return sparkWolfScreen;
+        case "Claw Bear":  return clawBearScreen;
+        case "Shadow Bat": return shadowBatScreen;
+        default:           return sparkWolfScreen;
+    }
+    }
 
     @Override
     public void onWin() {
@@ -159,10 +205,8 @@ public class PlayLevelScreen extends Screen implements GameListener {
         // when this method is called within the game, it signals that a boss fight has been triggered
         MusicPlayer.playMusic("src/music/battle-music.wav");
         // reset HP/menus so a rematch (after losing) starts fresh instead of reusing the last fight's state
-        cutawayScreen.initialize();
-        // each map has one boss, so the current map tells us which boss was talked to
-        currentBoss = (map == secondMap) ? 2 : 1;
-        playLevelScreenState = PlayLevelScreenState.CUTAWAY;
+        //cutawayScreen.initialize();
+        //playLevelScreenState = PlayLevelScreenState.CUTAWAY;
     }
 
     public void draw(GraphicsHandler graphicsHandler) {
@@ -178,7 +222,7 @@ public class PlayLevelScreen extends Screen implements GameListener {
                 encounterScreen.draw(graphicsHandler);
             break;
             case CUTAWAY:
-                cutawayScreen.draw(graphicsHandler);
+                //cutawayScreen.draw(graphicsHandler);
                 break;
             case SWAP_MOVES:
                 swapMovesScreen.draw(graphicsHandler);
@@ -256,8 +300,34 @@ public class PlayLevelScreen extends Screen implements GameListener {
     public void onBoss1Defeated() {
         if (!flagManager.isFlagSet("hasBeatenBoss1")) {
             flagManager.setFlag("hasBeatenBoss1");
+            flagManager.setFlag("move5Unlocked");
+            map.getTextbox().addText("As the slime disolves..."); 
+            map.getTextbox().addText("The boulders blocking the path crumble away.");
+            map.getTextbox().addText("You can now continue down the path.");
+            map.getTextbox().addText("You also decide to keep the slime's remains.");
+            map.getTextbox().addText("And you form them into a ball.");
+            map.getTextbox().addText("You can now use " + new Slimeball().getName() + " as a new move in battle!");
+            map.getTextbox().addText("Use 'E' to open the menu and equip it!");
+            map.getTextbox().setIsActive(true);
+            player.lock();
         }
         openRockyPathExit();
+    }
+
+    public void onBoss2Defeated() {
+        if (!flagManager.isFlagSet("hasBeatenBoss2")) {
+            flagManager.setFlag("hasBeatenBoss2");
+            flagManager.setFlag("move6Unlocked");
+            map.getTextbox().addText("The slime runs off...");
+            map.getTextbox().addText("But dropped something as it fled.");
+            map.getTextbox().addText("It was a huge sword!");
+            map.getTextbox().addText("You feel that this will be very useful!");
+            map.getTextbox().addText("You can now use " + new Haymaker().getName()
+                    + " as a new move in battle!");
+            map.getTextbox().addText("Use 'E' to open the menu and equip it!");
+            map.getTextbox().setIsActive(true);
+            player.lock();
+        }
     }
 
     // swaps the exit boulders on the rocky path for dirt path tiles (safe to call more than once)
@@ -403,6 +473,9 @@ public class PlayLevelScreen extends Screen implements GameListener {
         return player.getEquippedMoves();
     }
 
+    public Player getPlayer(){
+        return player;
+    }
     public Move[] getAvailableMoves() {
         return player.getAvailableMoves();
     }
@@ -414,11 +487,17 @@ public class PlayLevelScreen extends Screen implements GameListener {
         if (move instanceof Brace) {
             return flagManager.isFlagSet("move2Unlocked");
         }
-        if (move instanceof Test3) {
+        if (move instanceof Taunt) {
             return flagManager.isFlagSet("move3Unlocked");
         }
-        if (move instanceof Test4) {
+        if (move instanceof SacredFlame) {
             return flagManager.isFlagSet("move4Unlocked");
+        }
+        if (move instanceof Slimeball) {
+            return flagManager.isFlagSet("move5Unlocked");
+        }
+        if (move instanceof Haymaker) {
+            return flagManager.isFlagSet("move6Unlocked");
         }
         
         return true;
@@ -447,6 +526,13 @@ public class PlayLevelScreen extends Screen implements GameListener {
             player.setFacingDirection(Direction.DOWN);
             lastTile = map.getTileIndexByPosition(player.getX(), player.getY());
         }
+        if (currentRoamingEnemy != null) {
+            if (!playerLost) {
+            currentRoamingEnemy.setMapEntityStatus(MapEntityStatus.REMOVED);
+            }
+            currentRoamingEnemy = null;
+        }
+enemyCooldown = 60;
         MusicPlayer.playMusic("src/music/Inductance.wav");
         playLevelScreenState = PlayLevelScreenState.RUNNING;
 

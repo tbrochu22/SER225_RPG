@@ -2,13 +2,15 @@ package Level;
 
 import Battle.CureWounds;
 import Battle.Move;
-import Battle.SacredFlame;
+import Battle.BlindingLight;
 import Battle.Slash;
 import Battle.Hawkeye;
 import Battle.Brace;
-import Battle.Test3;
-import Battle.Test4;
+import Battle.Taunt;
+import Battle.SacredFlame;
 import Battle.VigorUp;
+import Battle.Slimeball;
+import Battle.Haymaker;
 import java.awt.Color;
 import java.util.ArrayList;
 
@@ -23,13 +25,23 @@ import Utils.Direction;
 
 public abstract class Player extends GameObject {
     private final Move[] availableMoves = {
-            new Slash(), new SacredFlame(), new VigorUp(), new CureWounds(),
-            new Hawkeye(), new Brace(), new Test3(), new Test4()
+            new Slash(), new BlindingLight(), new VigorUp(), new CureWounds(),
+            new Hawkeye(), new Brace(), new Taunt(), new SacredFlame(), new Slimeball(), 
+            new Haymaker()
     };
     private final Move[] equippedMoves = {
             availableMoves[0], availableMoves[1], availableMoves[2], availableMoves[3]
     };
 
+    //stats and levels
+    public static final int baseHp = 100;
+    public static final int baseAttack = 10;
+    public static final int hpPerLevel = 10;
+    public static final int attackPerLevel = 2;
+    protected int level = 1;
+    protected int exp = 0;
+    protected int maxHp = baseHp;
+    protected int attack = baseAttack;
     // values that affect player movement
     // these should be set in a subclass
     protected float walkSpeed = 0;
@@ -220,6 +232,25 @@ public abstract class Player extends GameObject {
 
     public Key getInteractKey() { return INTERACT_KEY; }
     public Move[] getEquippedMoves() { return equippedMoves.clone(); }
+    public int getLevel() { return level; };
+    public int getExp() {return exp; }
+    public int getMaxHp() { return maxHp; };
+    public int getAttack() { return attack; }
+
+    public int getExpToNextLevel() { return level * 50; }
+    
+    public int gainExp(int amount){
+        exp += amount;
+        int levelsGained = 0;
+        while(exp >= getExpToNextLevel()){
+            exp -= getExpToNextLevel();
+            level++;
+            maxHp += hpPerLevel;
+            attack += attackPerLevel;
+            levelsGained ++;
+        }
+        return levelsGained;
+    }
     public Move[] getAvailableMoves() { return availableMoves.clone(); }
 
     public void equipMove(int moveIndex, Move move) {
