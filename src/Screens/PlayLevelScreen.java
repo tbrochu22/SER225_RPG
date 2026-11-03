@@ -30,6 +30,7 @@ import Utils.Point;
 import java.util.ArrayList;
 import java.util.Random;
 import NPCs.RoamingEnemy;
+import Battle.HighJumpKick;
 
 // This class is for when the RPG game is actually being played
 public class PlayLevelScreen extends Screen implements GameListener {
@@ -50,6 +51,8 @@ public class PlayLevelScreen extends Screen implements GameListener {
     protected BossScreen currentFight;
     protected RoamingEnemy currentRoamingEnemy;
     protected int enemyCooldown = 0;
+    protected int roamingEnemiesDefeated = 0;
+    public static final int ROAMING_KILLS_NEEDED = 3;
 
     // each map is only built once and then reused, so going back to a map keeps its state
     // (flowers already touched, items already picked up, boulders already cleared, etc.)
@@ -80,6 +83,11 @@ public class PlayLevelScreen extends Screen implements GameListener {
         flagManager.addFlag("move4Unlocked", false);
         flagManager.addFlag("move5Unlocked", false);
         flagManager.addFlag("move6Unlocked", false);
+        flagManager.addFlag("killQuestStarted", false);
+        flagManager.addFlag("killQuestReady", false);
+        flagManager.addFlag("killQuestComplete", false);
+        flagManager.addFlag("move7Unlocked", false);
+        roamingEnemiesDefeated = 0;
 
         // define/setup map
         rockyPathMap = new RockyPathMap();
@@ -422,6 +430,9 @@ public class PlayLevelScreen extends Screen implements GameListener {
         if (move instanceof Haymaker) {
             return flagManager.isFlagSet("move6Unlocked");
         }
+        if (move instanceof HighJumpKick) {
+            return flagManager.isFlagSet("move7Unlocked");
+        }
         
         return true;
     }
@@ -452,6 +463,7 @@ public class PlayLevelScreen extends Screen implements GameListener {
         if (currentRoamingEnemy != null) {
             if (!playerLost) {
             currentRoamingEnemy.setMapEntityStatus(MapEntityStatus.REMOVED);
+            onRoamingEnemyDefeated();
             }
             currentRoamingEnemy = null;
         }
@@ -459,6 +471,24 @@ enemyCooldown = 60;
         MusicPlayer.playMusic("src/music/Inductance.wav");
         playLevelScreenState = PlayLevelScreenState.RUNNING;
 
+    }
+        // counts a roaming enemy kill toward the Mage's quest and tells the player their progress
+    private void onRoamingEnemyDefeated() {
+        roamingEnemiesDefeated++;
+        if (roamingEnemiesDefeated == ROAMING_KILLS_NEEDED) {
+            flagManager.setFlag("killQuestReady");
+        }
+        if (!flagManager.isFlagSet("killQuestStarted") || flagManager.isFlagSet("killQuestComplete")) {
+            return;   // only show progress while the quest is active
+        }
+        if (roamingEnemiesDefeated < ROAMING_KILLS_NEEDED) {
+            map.getTextbox().addText("Roaming enemies defeated: " + roamingEnemiesDefeated + "/" + ROAMING_KILLS_NEEDED);
+        } else {
+            map.getTextbox().addText("Roaming enemies defeated: " + ROAMING_KILLS_NEEDED + "/" + ROAMING_KILLS_NEEDED + "!");
+            map.getTextbox().addText("Go back and tell the Mage!");
+        }
+        map.getTextbox().setIsActive(true);
+        player.lock();
     }
     public void startBossFight(BossScreen boss) {
     currentFight = boss;
