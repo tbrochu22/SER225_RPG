@@ -400,9 +400,10 @@ public class PlayLevelScreen extends Screen implements GameListener {
             return false;
         }
         if (doorIsAbove) {
-            return body.getY1() <= doorTop + tileSize + 2;
+            float doorBottom = doorTop + tileSize;
+            return body.getY1() <= doorBottom + 2 && body.getY1() >= doorBottom - tileSize / 2f;
         } else {
-            return body.getY2() >= doorTop - 2;
+            return body.getY2() >= doorTop - 2 && body.getY2() <= doorTop + tileSize / 2f;
         }
     }
 
