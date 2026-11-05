@@ -165,7 +165,7 @@ public class GamePanel extends JPanel {
 
 		bufferGraphics.dispose();
 
-		// Scale the game image to fill the entire window
+		// Fit the game image to the panel without changing its aspect ratio.
 		Graphics2D screenGraphics = (Graphics2D) g.create();
 
 		screenGraphics.setRenderingHint(
@@ -173,12 +173,23 @@ public class GamePanel extends JPanel {
 			RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR
 		);
 
+		double scale = Math.min(
+			(double) getWidth() / Config.GAME_WINDOW_WIDTH,
+			(double) getHeight() / Config.GAME_WINDOW_HEIGHT
+		);
+		int scaledWidth = (int) Math.round(Config.GAME_WINDOW_WIDTH * scale);
+		int scaledHeight = (int) Math.round(Config.GAME_WINDOW_HEIGHT * scale);
+		int x = (getWidth() - scaledWidth) / 2;
+		int y = (getHeight() - scaledHeight) / 2;
+
+		screenGraphics.setColor(Color.BLACK);
+		screenGraphics.fillRect(0, 0, getWidth(), getHeight());
 		screenGraphics.drawImage(
 			gameBuffer,
-			0,
-			0,
-			getWidth(),
-			getHeight(),
+			x,
+			y,
+			scaledWidth,
+			scaledHeight,
 			null
 		);
 

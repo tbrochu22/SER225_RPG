@@ -1,6 +1,7 @@
 package Engine;
 
 import javax.swing.*;
+import java.awt.*;
 
 /*
  * The JFrame that holds the GamePanel
@@ -14,13 +15,17 @@ public class GameWindow {
         gameWindow = new JFrame("Game");
         gamePanel = new GamePanel();
 
+        gameWindow.setUndecorated(true);
         gamePanel.setFocusable(true);
         gameWindow.setContentPane(gamePanel);
-        gameWindow.setResizable(true);
+        gameWindow.setResizable(false);
         gameWindow.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-        // Maximize the game window
-        gameWindow.setExtendedState(JFrame.MAXIMIZED_BOTH);
+        GraphicsConfiguration screen = GraphicsEnvironment
+            .getLocalGraphicsEnvironment()
+            .getDefaultScreenDevice()
+            .getDefaultConfiguration();
+        gameWindow.setBounds(screen.getBounds());
         gameWindow.setVisible(true);
 
         // Initialize the game
