@@ -400,10 +400,9 @@ public class PlayLevelScreen extends Screen implements GameListener {
             return false;
         }
         if (doorIsAbove) {
-            float doorBottom = doorTop + tileSize;
-            return body.getY1() <= doorBottom + 2 && body.getY1() >= doorBottom - tileSize / 2f;
+            return body.getY1() <= doorTop + tileSize + 2;
         } else {
-            return body.getY2() >= doorTop - 2 && body.getY2() <= doorTop + tileSize / 2f;
+            return body.getY2() >= doorTop - 2;
         }
     }
 
@@ -497,12 +496,7 @@ public class PlayLevelScreen extends Screen implements GameListener {
         lastTile = map.getTileIndexByPosition(player.getX(), player.getY());
 
         // Change background music based on the map
-        if (map == rockyPathMap) {
-            MusicPlayer.playMusic("src/music/Inductance.wav");
-        } 
-        else if (map == secondMap) {
-            MusicPlayer.playMusic("src/music/mfcc-game-game-music-603130.wav");
-        }
+        playMapMusic();
     }
 
     @Override
