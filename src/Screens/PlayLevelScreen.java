@@ -9,6 +9,7 @@ import Battle.Haymaker;
 import Battle.HighJumpKick;
 import Battle.Honeycomb;
 import Battle.Move;
+import Battle.LockIn;
 import Battle.Roar;
 import Battle.SacredFlame;
 import Battle.Scratch;
@@ -16,6 +17,7 @@ import Battle.Slimeball;
 import Battle.Taunt;
 import Battle.VampBite;
 import Battle.electricBite;
+import Battle.OmniChant;
 import Engine.GraphicsHandler;
 import Engine.Screen;
 import EnhancedMapTiles.Rflower;
@@ -87,10 +89,12 @@ public class PlayLevelScreen extends Screen implements GameListener {
         flagManager.addFlag("move4Unlocked", false);
         flagManager.addFlag("move5Unlocked", false);
         flagManager.addFlag("move6Unlocked", false);
+        flagManager.addFlag("move7Unlocked", false);
+        flagManager.addFlag("move8Unlocked", false);
+        flagManager.addFlag("omniChantUnlocked", false);
         flagManager.addFlag("killQuestStarted", false);
         flagManager.addFlag("killQuestReady", false);
         flagManager.addFlag("killQuestComplete", false);
-        flagManager.addFlag("move7Unlocked", false);
         roamingEnemiesDefeated = 0;
 
         // define/setup map
@@ -132,7 +136,7 @@ public class PlayLevelScreen extends Screen implements GameListener {
                 new Roar(), new Bite(), new electricBite(), new Scratch()
         });
 
-        sparkWolfScreen = new BossScreen(this, "Spark Wolf", "SparkWolf.png", new Move[] {new electricBite(), new Roar(), new Growl(), new Scratch()}, 90, 9, 30);
+        sparkWolfScreen = new BossScreen(this, "Spark Wolf", "SparkWolf.png", new Move[] {new electricBite(), new Bite(), new Growl(), new Scratch()}, 90, 9, 30);
         clawBearScreen = new BossScreen(this, "Claw Bear", "ClawBear.png", new Move[] {new Honeycomb(), new Roar(), new Growl(), new Scratch()}, 120, 8, 35);
         shadowBatScreen = new BossScreen(this, "ShadowBat", "ShadowBat.png", new Move[] {new VampBite(), new Roar(), new Bite(), new Scratch()}, 80, 10, 30);
         slimeBossScreen = new BossScreen(this, "Slimeboss", "Boss1.png", new Move[] {new Slimeball(), new Growl(), new VampBite(), new Scratch()}, 150, 10, 60);
@@ -548,6 +552,12 @@ public class PlayLevelScreen extends Screen implements GameListener {
         }
         if (move instanceof HighJumpKick) {
             return flagManager.isFlagSet("move7Unlocked");
+        }
+        if (move instanceof LockIn) {
+            return flagManager.isFlagSet("move8Unlocked");
+        }
+        if (move instanceof OmniChant) {
+            return flagManager.isFlagSet("omniChantUnlocked");
         }
         
         return true;
