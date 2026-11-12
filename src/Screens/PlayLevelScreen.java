@@ -1,5 +1,6 @@
 package Screens;
 
+import Battle.CureWounds;
 import Battle.Bite;
 import Battle.Brace;
 import Battle.Growl;
@@ -47,7 +48,7 @@ public class PlayLevelScreen extends Screen implements GameListener {
     protected java.util.Random random;
     protected Utils.Point lastTile;
     protected ArrayList<Rflower> flowers;
-    protected BossScreen sparkWolfScreen, clawBearScreen, shadowBatScreen, slimeBossScreen,slimeBossScreen2;
+    protected BossScreen sparkWolfScreen, clawBearScreen, shadowBatScreen, slimeBossScreen,slimeBossScreen2,slimeBossScreen3;
     protected BossScreen[] randomBosses;
     protected BossScreen currentFight;
     protected RoamingEnemy currentRoamingEnemy;
@@ -136,6 +137,7 @@ public class PlayLevelScreen extends Screen implements GameListener {
         shadowBatScreen = new BossScreen(this, "ShadowBat", "ShadowBat.png", new Move[] {new VampBite(), new Roar(), new Bite(), new Scratch()}, 80, 10, 30);
         slimeBossScreen = new BossScreen(this, "Slimeboss", "Boss1.png", new Move[] {new Slimeball(), new Growl(), new VampBite(), new Scratch()}, 150, 10, 60);
         slimeBossScreen2 = new BossScreen(this, "Raging Slime", "Boss2.png", new Move[] {new Haymaker(), new Roar(), new VampBite(), new Slimeball()}, 220, 12, 100);       
+        slimeBossScreen3 = new BossScreen(this, "King Slime", "Boss3.png", new Move[] {new Slimeball(), new Haymaker(), new Scratch(), new CureWounds()}, 300, 15, 175);
         randomBosses = new BossScreen[] { sparkWolfScreen, clawBearScreen, shadowBatScreen };
         lastTile = map.getTileIndexByPosition(player.getX(), player.getY());
         random = new Random();
@@ -318,6 +320,10 @@ public class PlayLevelScreen extends Screen implements GameListener {
     private static final int PYRAMID_INSIDE_DOOR_Y = 13;
     private static final int PYRAMID_ARRIVAL_X = 9;
     private static final int PYRAMID_ARRIVAL_Y = 11;
+
+    // the entrance of the cave in the volcano map
+    private static final int VOLCANO_CAVE_ENTRANCE_X = 0;
+    private static final int VOLCANO_CAVE_ENTRANCE_Y = 0;
 
     // marks Boss1 as beaten and clears the boulders blocking the end of the path
     public void onBoss1Defeated() {

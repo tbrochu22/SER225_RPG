@@ -113,6 +113,24 @@ public class VolcanoTileset extends Tileset {
         // index 23 -- glowing fire crystals on the flagstones (not passable)
         mapTiles.add(overlayTile(flagstoneFrame, 3, 5, TileType.NOT_PASSABLE));
 
+        // index 24 -- top left corrner of cave enterance (not passable)
+        mapTiles.add(plainTile(6, 0, TileType.NOT_PASSABLE));
+
+        // index 25 -- top middle corrner of cave enterance (not passable)
+        mapTiles.add(plainTile(6, 1, TileType.NOT_PASSABLE));
+
+        // index 26 -- top right corrner of cave enterance (not passable)
+        mapTiles.add(plainTile(6, 2, TileType.NOT_PASSABLE));
+
+        // index 27 -- bottom left corrner of cave enterance (not passable)
+        mapTiles.add(plainTile(7, 0, TileType.NOT_PASSABLE));   
+
+        // index 28 -- bottom middle corrner of cave enterance (not passable)
+        mapTiles.add(plainTile(7, 1, TileType.NOT_PASSABLE));
+
+        // index 29 -- bottom right corrner of cave enterance (not passable)
+        mapTiles.add(plainTile(7, 2, TileType.NOT_PASSABLE));
+
         return mapTiles;
     }
 
