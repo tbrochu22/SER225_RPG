@@ -17,6 +17,7 @@ import Battle.Taunt;
 import Battle.VampBite;
 import Battle.electricBite;
 import Battle.OmniChant;
+import Battle.Worldfire;
 import Engine.GraphicsHandler;
 import Engine.Screen;
 import EnhancedMapTiles.Rflower;
@@ -49,6 +50,10 @@ public class PlayLevelScreen extends Screen implements GameListener {
     protected java.util.Random random;
     protected Utils.Point lastTile;
     protected ArrayList<Rflower> flowers;
+    protected int boss1hp = 150;
+    protected int boss1attack = 15;
+    protected int boss2hp = 230;
+    protected int boss2attack = 22;
     protected BossScreen sparkWolfScreen, clawBearScreen, shadowBatScreen, slimeBossScreen,slimeBossScreen2;
     protected BossScreen[] randomBosses;
     protected BossScreen currentFight;
@@ -135,11 +140,21 @@ public class PlayLevelScreen extends Screen implements GameListener {
                 new Roar(), new Bite(), new electricBite(), new Scratch()
         });
 
-        sparkWolfScreen = new BossScreen(this, "Spark Wolf", "SparkWolf.png", new Move[] {new electricBite(), new Bite(), new Growl(), new Scratch()}, 90, 9, 30);
+        if (player.getLevel() < 4) {
+            boss1hp += boss1hp / 2;
+            boss1attack += boss1attack / 2;
+        }
+
+        if (player.getLevel() < 7) {
+            boss2hp += boss2hp / 2;
+            boss2attack += boss2attack / 2;
+        }
+
+        sparkWolfScreen = new BossScreen(this, "Spark Wolf", "SparkWolf.png", new Move[] {new electricBite(), new Bite(), new Roar(), new Scratch()}, 90, 9, 30);
         clawBearScreen = new BossScreen(this, "Claw Bear", "ClawBear.png", new Move[] {new Honeycomb(), new Roar(), new Growl(), new Scratch()}, 120, 8, 35);
         shadowBatScreen = new BossScreen(this, "ShadowBat", "ShadowBat.png", new Move[] {new VampBite(), new Roar(), new Bite(), new Scratch()}, 80, 10, 30);
-        slimeBossScreen = new BossScreen(this, "Slimeboss", "Boss1.png", new Move[] {new Slimeball(), new Growl(), new VampBite(), new Scratch()}, 150, 10, 60);
-        slimeBossScreen2 = new BossScreen(this, "Raging Slime", "Boss2.png", new Move[] {new Haymaker(), new Roar(), new VampBite(), new Slimeball()}, 220, 12, 100);       
+        slimeBossScreen = new BossScreen(this, "Slimeboss", "Boss1.png", new Move[] {new Slimeball(), new Growl(), new VampBite(), new Scratch()}, boss1hp, boss1attack, 60);
+        slimeBossScreen2 = new BossScreen(this, "Raging Slime", "Boss2.png", new Move[] {new Haymaker(), new Roar(), new VampBite(), new Slimeball()}, boss2hp, boss2attack, 100);
         randomBosses = new BossScreen[] { sparkWolfScreen, clawBearScreen, shadowBatScreen };
         lastTile = map.getTileIndexByPosition(player.getX(), player.getY());
         random = new Random();
@@ -156,7 +171,7 @@ public class PlayLevelScreen extends Screen implements GameListener {
                 if (playLevelScreenState == PlayLevelScreenState.RUNNING) {
                     map.update(player);
                     checkForRoamingEnemyContact();
-                    if(playLevelScreenState == playLevelScreenState.RUNNING){
+                    if(playLevelScreenState == PlayLevelScreenState.RUNNING){
                     encounterChance();
                     checkForMapExit();
                     }
