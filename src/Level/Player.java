@@ -255,6 +255,7 @@ public abstract class Player extends GameObject {
         }
         return levelsGained;
     }
+
     public Move[] getAvailableMoves() { return availableMoves.clone(); }
 
     public void equipMove(int moveIndex, Move move) {
