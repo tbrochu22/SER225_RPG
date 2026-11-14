@@ -80,6 +80,7 @@ public class PlayLevelScreen extends Screen implements GameListener {
         flagManager.addFlag("hasFoundBall", false);
         flagManager.addFlag("hasBeatenBoss1", false);
         flagManager.addFlag("hasBeatenBoss2", false);
+        flagManager.addFlag("hasBeatenBoss3", false);
         flagManager.addFlag("archerQuestStarted", false);
         flagManager.addFlag("hasGift", false);
         flagManager.addFlag("archerQuestComplete", false);
@@ -141,7 +142,7 @@ public class PlayLevelScreen extends Screen implements GameListener {
         shadowBatScreen = new BossScreen(this, "ShadowBat", "ShadowBat.png", new Move[] {new VampBite(), new Roar(), new Bite(), new Scratch()}, 80, 10, 30);
         slimeBossScreen = new BossScreen(this, "Slimeboss", "Boss1.png", new Move[] {new Slimeball(), new Growl(), new VampBite(), new Scratch()}, 150, 10, 60);
         slimeBossScreen2 = new BossScreen(this, "Raging Slime", "Boss2.png", new Move[] {new Haymaker(), new Roar(), new VampBite(), new Slimeball()}, 220, 12, 100);       
-        slimeBossScreen3 = new BossScreen(this, "King Slime", "Boss3.png", new Move[] {new Slimeball(), new Haymaker(), new Scratch(), new CureWounds()}, 300, 15, 175);
+        slimeBossScreen3 = new BossScreen(this, "King Slime", "Boss3.png", new Move[] {new Slimeball(), new Haymaker(), new OmniChant(), new CureWounds()}, 300, 15, 175);
         randomBosses = new BossScreen[] { sparkWolfScreen, clawBearScreen, shadowBatScreen };
         lastTile = map.getTileIndexByPosition(player.getX(), player.getY());
         random = new Random();
@@ -326,8 +327,8 @@ public class PlayLevelScreen extends Screen implements GameListener {
     private static final int PYRAMID_ARRIVAL_Y = 11;
 
     // the entrance of the cave in the volcano map
-    private static final int VOLCANO_CAVE_ENTRANCE_X = 0;
-    private static final int VOLCANO_CAVE_ENTRANCE_Y = 0;
+    private static final int VOLCANO_CAVE_ENTRANCE_X = 3;
+    private static final int VOLCANO_CAVE_ENTRANCE_Y = 19;
 
     // marks Boss1 as beaten and clears the boulders blocking the end of the path
     public void onBoss1Defeated() {
@@ -357,6 +358,20 @@ public class PlayLevelScreen extends Screen implements GameListener {
             map.getTextbox().addText("You feel that this will be very useful!");
             map.getTextbox().addText("You can now use " + new Haymaker().getName()
                     + " as a new move in battle!");
+            map.getTextbox().addText("Use 'E' to open the menu and equip it!");
+            map.getTextbox().setIsActive(true);
+            player.lock();
+            openDesertBossExit();
+        }
+    }
+    public void onBoss3Defeated() {
+        if (!flagManager.isFlagSet("hasBeatenBoss3")) {
+            flagManager.setFlag("hasBeatenBoss3");
+            flagManager.setFlag("omniChantUnlocked");
+            map.getTextbox().addText("You feel a surge of power...");
+            map.getTextbox().addText("The King slime's power flows into you!");
+            map.getTextbox().addText("You can now use " + new OmniChant().getName()
+                     + " as a new move in battle!");
             map.getTextbox().addText("Use 'E' to open the menu and equip it!");
             map.getTextbox().setIsActive(true);
             player.lock();
