@@ -113,43 +113,44 @@ public class VolcanoTileset extends Tileset {
         // index 23 -- glowing fire crystals on the flagstones (not passable)
         mapTiles.add(overlayTile(flagstoneFrame, 3, 5, TileType.NOT_PASSABLE));
 
+        // the gate tiles (24-35) have see-through (magenta) corners, so they are drawn on top of the ash ground
         // index 24 -- top left corrner of cave enterance (not passable,Closed Gate)
-        mapTiles.add(plainTile(6, 0, TileType.NOT_PASSABLE));
+        mapTiles.add(overlayTile(ashFrame, 6, 0, TileType.NOT_PASSABLE));
 
         // index 25 -- top middle corrner of cave enterance (not passable,Closed Gate)
-        mapTiles.add(plainTile(6, 1, TileType.NOT_PASSABLE));
+        mapTiles.add(overlayTile(ashFrame, 6, 1, TileType.NOT_PASSABLE));
 
         // index 26 -- top right corrner of cave enterance (not passable,Closed Gate)
-        mapTiles.add(plainTile(6, 2, TileType.NOT_PASSABLE));
+        mapTiles.add(overlayTile(ashFrame, 6, 2, TileType.NOT_PASSABLE));
 
         // index 27 -- bottom left corrner of cave enterance (not passable,Closed Gate)
-        mapTiles.add(plainTile(7, 0, TileType.NOT_PASSABLE));   
+        mapTiles.add(overlayTile(ashFrame, 7, 0, TileType.NOT_PASSABLE));   
 
         // index 28 -- bottom middle corrner of cave enterance (not passable,Closed Gate)
-        mapTiles.add(plainTile(7, 1, TileType.NOT_PASSABLE));
+        mapTiles.add(overlayTile(ashFrame, 7, 1, TileType.NOT_PASSABLE));
 
         // index 29 -- bottom right corrner of cave enterance (not passable,Closed Gate)
-        mapTiles.add(plainTile(7, 2, TileType.NOT_PASSABLE));
+        mapTiles.add(overlayTile(ashFrame, 7, 2, TileType.NOT_PASSABLE));
 
         // Gate tiles turn into the open gate tiles when player unlocks 5 unique moves.
 
         // index 30 -- top left corrner of cave enterance (not passable,Open Gate)
-        mapTiles.add(plainTile(4, 0, TileType.NOT_PASSABLE));
+        mapTiles.add(overlayTile(ashFrame, 4, 0, TileType.NOT_PASSABLE));
 
         // index 31 -- top middle corrner of cave enterance (not passable,Open Gate)
-        mapTiles.add(plainTile(4, 1, TileType.NOT_PASSABLE));
+        mapTiles.add(overlayTile(ashFrame, 4, 1, TileType.NOT_PASSABLE));
 
         // index 32 -- top right corrner of cave enterance (not passable,Open Gate)
-        mapTiles.add(plainTile(4, 2, TileType.NOT_PASSABLE));
+        mapTiles.add(overlayTile(ashFrame, 4, 2, TileType.NOT_PASSABLE));
 
         // index 33 -- bottom left corrner of cave enterance (not passable,Open Gate)
-        mapTiles.add(plainTile(5, 0, TileType.NOT_PASSABLE));
+        mapTiles.add(overlayTile(ashFrame, 5, 0, TileType.NOT_PASSABLE));
 
         // index 34 -- bottom middle corrner of cave enterance (not passable,Open Gate)
-        mapTiles.add(plainTile(5, 1, TileType.NOT_PASSABLE));
+        mapTiles.add(overlayTile(ashFrame, 5, 1, TileType.NOT_PASSABLE));
 
         // index 35 -- bottom right corrner of cave enterance (not passable,Open Gate)
-        mapTiles.add(plainTile(5, 2, TileType.NOT_PASSABLE));
+        mapTiles.add(overlayTile(ashFrame, 5, 2, TileType.NOT_PASSABLE));
 
         return mapTiles;
     }

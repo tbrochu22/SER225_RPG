@@ -9,13 +9,12 @@ import Tilesets.VolcanoTileset;
 import java.util.ArrayList;
 
 // The inside of the cave in the volcano (ThirdMap).
-// The player enters by walking up into the cave's doorway, and leaves through the doorway in the bottom wall
+// The player enters by walking up into the cave gate (once it has opened), and leaves through the opening in the bottom wall (tiles 9-10 of row 15)
 public class CaveMap extends Map {
 
     public CaveMap() {
         super("cave_map.txt", new VolcanoTileset());
-        // Don't know the exact coordinates of the cave entrance yet, so just set the player start position to (0, 0) for now
-        this.playerStartPosition = getMapTile(0, 0).getLocation();
+        this.playerStartPosition = getMapTile(9, 13).getLocation();
     }
 
     @Override

@@ -26,6 +26,7 @@ import Game.GameState;
 import Game.ScreenCoordinator;
 import GameObject.Rectangle;
 import Level.*;
+import Maps.CaveMap;
 import Maps.PyramidMap;
 import Maps.RockyPathMap;
 import Maps.SecondMap;
@@ -69,6 +70,11 @@ public class PlayLevelScreen extends Screen implements GameListener {
     protected SecondMap secondMap;
     protected PyramidMap pyramidMap;
     protected ThirdMap thirdMap;
+    protected CaveMap caveMap;
+    // true once the cave gate in the volcano map has been swapped to its open tiles
+    protected boolean caveGateOpen;
+    // true while the "gate is sealed" message has been shown for the current approach, so it doesn't re-trigger every frame
+    protected boolean caveGateHintShown;
     // which boss the current/last boss fight is against (1 = slime on the rocky path, 2 = octopus in the desert)
     protected int currentBoss;
 
@@ -108,6 +114,9 @@ public class PlayLevelScreen extends Screen implements GameListener {
         secondMap = null;
         pyramidMap = null;
         thirdMap = null;
+        caveMap = null;
+        caveGateOpen = false;
+        caveGateHintShown = false;
         map = rockyPathMap;
         map.setFlagManager(flagManager);
         playMapMusic();
@@ -341,9 +350,23 @@ public class PlayLevelScreen extends Screen implements GameListener {
     private static final int PYRAMID_ARRIVAL_X = 9;
     private static final int PYRAMID_ARRIVAL_Y = 11;
 
-    // the entrance of the cave in the volcano map
-    private static final int VOLCANO_CAVE_ENTRANCE_X = 3;
-    private static final int VOLCANO_CAVE_ENTRANCE_Y = 19;
+    // the cave gate in the volcano map (third_map.txt): a 3 wide, 2 tall block of gate tiles (24-29 closed, 30-35 open)
+    // the bottom row of the gate is row 19, and the player lands just below it (row 21) when walking back out of the cave
+    private static final int VOLCANO_CAVE_GATE_START_X = 2;
+    private static final int VOLCANO_CAVE_GATE_END_X = 4;
+    private static final int VOLCANO_CAVE_GATE_TOP_ROW = 18;
+    private static final int VOLCANO_CAVE_GATE_BOTTOM_ROW = 19;
+    private static final int VOLCANO_FROM_CAVE_X = 3;
+    private static final int VOLCANO_FROM_CAVE_Y = 21;
+    // the gate opens once the player has unlocked this many moves
+    public static final int CAVE_MOVES_REQUIRED = 5;
+
+    // the exit of the cave (the opening in the bottom wall of cave_map.txt), and where the player lands when walking in
+    private static final int CAVE_EXIT_ROW = 15;
+    private static final int CAVE_EXIT_START_X = 9;
+    private static final int CAVE_EXIT_END_X = 10;
+    private static final int CAVE_ARRIVAL_X = 9;
+    private static final int CAVE_ARRIVAL_Y = 13;
 
     // marks Boss1 as beaten and clears the boulders blocking the end of the path
     public void onBoss1Defeated() {
@@ -490,11 +513,86 @@ public class PlayLevelScreen extends Screen implements GameListener {
                     && currentTile.x >= VOLCANO_EXIT_START_X && currentTile.x <= VOLCANO_EXIT_END_X) {
                 loadMap(secondMap, DESERT_FROM_VOLCANO_X, DESERT_FROM_VOLCANO_Y, Direction.UP);
             }
+            // the cave gate opens once enough moves are unlocked, and walking up into it goes inside
+            else {
+                updateCaveGate();
+                checkCaveGate();
+            }
+        } else if (map == caveMap) {
+            // walking down through the opening in the bottom wall returns to the volcano, just below the gate
+            if (currentTile.y >= CAVE_EXIT_ROW
+                    && currentTile.x >= CAVE_EXIT_START_X && currentTile.x <= CAVE_EXIT_END_X) {
+                loadMap(thirdMap, VOLCANO_FROM_CAVE_X, VOLCANO_FROM_CAVE_Y, Direction.DOWN);
+            }
         } else if (map == pyramidMap) {
             // walking down into the doorway in the bottom wall goes back out to the desert, just below the pyramid
             if (isTouchingDoorway(PYRAMID_INSIDE_DOOR_X, PYRAMID_INSIDE_DOOR_Y, false)) {
                 loadMap(secondMap, DESERT_FROM_PYRAMID_X, DESERT_FROM_PYRAMID_Y, Direction.DOWN);
             }
+        }
+    }
+
+    // how many of the player's moves have been unlocked so far (the moves that start unlocked don't count)
+    public int countUnlockedMoves() {
+        String[] moveFlags = {"move1Unlocked", "move2Unlocked", "move3Unlocked", "move4Unlocked",
+                "move5Unlocked", "move6Unlocked", "move7Unlocked", "move8Unlocked", "omniChantUnlocked"};
+        int count = 0;
+        for (String flag : moveFlags) {
+            if (flagManager.isFlagSet(flag)) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    // swaps the closed gate tiles (24-29) in the volcano for the open gate tiles (30-35) once enough moves are unlocked
+    // (safe to call more than once)
+    private void updateCaveGate() {
+        if (caveGateOpen || thirdMap == null || countUnlockedMoves() < CAVE_MOVES_REQUIRED) {
+            return;
+        }
+        for (int y = VOLCANO_CAVE_GATE_TOP_ROW; y <= VOLCANO_CAVE_GATE_BOTTOM_ROW; y++) {
+            for (int x = VOLCANO_CAVE_GATE_START_X; x <= VOLCANO_CAVE_GATE_END_X; x++) {
+                Point location = thirdMap.getMapTile(x, y).getLocation();
+                // each open gate tile sits 6 indexes after its closed version in VolcanoTileset
+                int openTileIndex = thirdMap.getMapTile(x, y).getTileIndex() + 6;
+                thirdMap.setMapTile(x, y, thirdMap.getTileset().getTile(openTileIndex).build(location.x, location.y));
+            }
+        }
+        caveGateOpen = true;
+    }
+
+    // true when the player is standing below the gate and lined up with it (touching it, like the pyramid doorway)
+    private boolean isTouchingCaveGate() {
+        int tileSize = map.getTileset().getScaledSpriteWidth();
+        float gateLeft = VOLCANO_CAVE_GATE_START_X * tileSize;
+        float gateRight = (VOLCANO_CAVE_GATE_END_X + 1) * tileSize;
+        float gateBottom = (VOLCANO_CAVE_GATE_BOTTOM_ROW + 1) * tileSize;
+        Rectangle body = player.getBounds();
+        float centerX = (body.getX1() + body.getX2()) / 2f;
+        // has to be below the gate, otherwise standing on the ground north of it would count too
+        return centerX >= gateLeft + 8 && centerX <= gateRight - 8
+                && body.getY1() >= gateBottom - tileSize && body.getY1() <= gateBottom + 2;
+    }
+
+    // walking up into the gate: goes into the cave if it's open, otherwise explains why it's shut
+    private void checkCaveGate() {
+        if (!isTouchingCaveGate()) {
+            caveGateHintShown = false;
+            return;
+        }
+        if (caveGateOpen) {
+            if (caveMap == null) {
+                caveMap = new CaveMap();
+            }
+            loadMap(caveMap, CAVE_ARRIVAL_X, CAVE_ARRIVAL_Y, Direction.UP);
+        } else if (!caveGateHintShown && !map.getTextbox().isActive()) {
+            caveGateHintShown = true;
+            map.getTextbox().addText("The cave gate is sealed shut.");
+            map.getTextbox().addText("It looks like it will open once you have unlocked " + CAVE_MOVES_REQUIRED + " moves.");
+            map.getTextbox().addText("Moves unlocked: " + countUnlockedMoves() + "/" + CAVE_MOVES_REQUIRED);
+            map.getTextbox().setIsActive(true);
+            player.lock();
         }
     }
 
@@ -525,6 +623,9 @@ public class PlayLevelScreen extends Screen implements GameListener {
         }
         if (map == secondMap && flagManager.isFlagSet("hasBeatenBoss2")) {
             openDesertBossExit();
+        }
+        if (map == thirdMap) {
+            updateCaveGate();
         }
 
         flowers.clear();
