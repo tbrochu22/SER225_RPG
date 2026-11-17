@@ -56,8 +56,10 @@ public class PlayLevelScreen extends Screen implements GameListener {
     protected ArrayList<Rflower> flowers;
     protected int boss1hp = 150;
     protected int boss1attack = 15;
+    protected int boss1exp = 60;
     protected int boss2hp = 230;
     protected int boss2attack = 22;
+    protected int boss2exp = 100;
     protected BossScreen sparkWolfScreen, clawBearScreen, shadowBatScreen, slimeBossScreen,slimeBossScreen2;
     // desert fights
     protected BossScreen sandScorpionScreen, desertCobraScreen, magmaGolemScreen, emberHawkScreen;
@@ -171,22 +173,24 @@ public class PlayLevelScreen extends Screen implements GameListener {
         if (player.getLevel() < 4) {
             boss1hp += boss1hp / 2;
             boss1attack += boss1attack / 2;
+            boss1exp += boss1exp * 2;
         }
 
         if (player.getLevel() < 7) {
             boss2hp += boss2hp / 2;
             boss2attack += boss2attack / 2;
+            boss2exp += boss2exp * 2;
         }
 
         sparkWolfScreen = new BossScreen(this, "Spark Wolf", "SparkWolf.png", new Move[] {new electricBite(), new Bite(), new Roar(), new Scratch()}, 90, 9, 30);
         clawBearScreen = new BossScreen(this, "Claw Bear", "ClawBear.png", new Move[] {new Honeycomb(), new Roar(), new Growl(), new Scratch()}, 120, 8, 35);
         shadowBatScreen = new BossScreen(this, "ShadowBat", "ShadowBat.png", new Move[] {new VampBite(), new Roar(), new Bite(), new Scratch()}, 80, 10, 30);
-        sandScorpionScreen = new BossScreen(this, "Sand Scorpion", "SandScorpion.png", new Move[] {new Scratch(), new electricBite(), new Bite(), new Brace()}, 100, 10, 100);
-        desertCobraScreen = new BossScreen(this, "Desert Cobra", "DesertCobra.png", new Move[] {new Growl(), new VigorUp(), new Slash(), new Taunt()}, 10, 10, 10);
-        magmaGolemScreen = new BossScreen(this, "Magma Golem", "MagmaGolem.png", new Move[] {new SacredFlame(), new VampBite(), new VigorUp(), new Haymaker()}, 10, 10, 10);
-        emberHawkScreen = new BossScreen(this, "Ember Hawk", "EmberHawk.png", new Move[] {new Bite(), new Growl(), new Hawkeye(), new Slash()}, 10, 10, 10);
-        slimeBossScreen = new BossScreen(this, "Slimeboss", "Boss1.png", new Move[] {new Slimeball(), new Growl(), new VampBite(), new Scratch()}, boss1hp, boss1attack, 60);
-        slimeBossScreen2 = new BossScreen(this, "Raging Slime", "Boss2.png", new Move[] {new Haymaker(), new Roar(), new VampBite(), new Slimeball()}, boss2hp, boss2attack, 100);
+        sandScorpionScreen = new BossScreen(this, "Sand Scorpion", "SandScorpion.png", new Move[] {new Scratch(), new electricBite(), new Bite(), new Brace()}, 130, 13, 100);
+        desertCobraScreen = new BossScreen(this, "Desert Cobra", "DesertCobra.png", new Move[] {new Growl(), new VigorUp(), new Slash(), new Taunt()}, 175, 18, 140);
+        magmaGolemScreen = new BossScreen(this, "Magma Golem", "MagmaGolem.png", new Move[] {new SacredFlame(), new VampBite(), new VigorUp(), new Haymaker()}, 300, 25, 225);
+        emberHawkScreen = new BossScreen(this, "Ember Hawk", "EmberHawk.png", new Move[] {new SacredFlame(), new Growl(), new Hawkeye(), new Slash()}, 250, 20, 175);
+        slimeBossScreen = new BossScreen(this, "Slimeboss", "Boss1.png", new Move[] {new Slimeball(), new Growl(), new VampBite(), new Scratch()}, boss1hp, boss1attack, boss1exp);
+        slimeBossScreen2 = new BossScreen(this, "Raging Slime", "Boss2.png", new Move[] {new Haymaker(), new Roar(), new VampBite(), new Slimeball()}, boss2hp, boss2attack, boss2exp);
         randomBosses = new BossScreen[] { sparkWolfScreen, clawBearScreen, shadowBatScreen };
         desertBosses = new BossScreen[] { sandScorpionScreen, desertCobraScreen };
         lastTile = map.getTileIndexByPosition(player.getX(), player.getY());
