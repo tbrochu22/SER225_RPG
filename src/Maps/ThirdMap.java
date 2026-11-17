@@ -51,7 +51,7 @@ public class ThirdMap extends Map {
         npcs.add(new RoamingEnemy(22, getMapTile(17, 17).getLocation(), "MagmaGolem.png", "Magma Golem"));  // just before the lava crossing
         npcs.add(new RoamingEnemy(23, getMapTile(7, 24).getLocation(), "EmberHawk.png", "Ember Hawk"));     // bottom-left end of the path
 
-        Villager hermit = new Villager(12, getMapTile(4, 17).getLocation(), "Hermit.png", Direction.RIGHT);
+        Villager hermit = new Villager(12, getMapTile(7, 19).getLocation(), "Hermit.png", Direction.RIGHT);
         hermit.setInteractScript(new SimpleTextScript(new String[] {
                 "Few travelers make it this far...",
                 "I came out here for some peace and quiet.\nThen the volcano started rumbling. Ha!"

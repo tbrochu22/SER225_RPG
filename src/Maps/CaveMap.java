@@ -4,6 +4,8 @@ import Level.EnhancedMapTile;
 import Level.Map;
 import Level.NPC;
 import Level.Trigger;
+import NPCs.Boss3;
+import Scripts.ThirdMap.Boss3Script;
 import Tilesets.VolcanoTileset;
 
 import java.util.ArrayList;
@@ -24,7 +26,12 @@ public class CaveMap extends Map {
 
     @Override
     public ArrayList<NPC> loadNPCs() {
-        return new ArrayList<>();
+        ArrayList<NPC> npcs = new ArrayList<>();
+        Boss3 boss3 = new Boss3(3, getMapTile(9, 6).getLocation());
+        boss3.setExistenceFlag("hasBeatenBoss3");
+        boss3.setInteractScript(new Boss3Script());
+        npcs.add(boss3);
+        return npcs;
     }
 
     @Override

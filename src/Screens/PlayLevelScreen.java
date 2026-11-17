@@ -56,13 +56,19 @@ public class PlayLevelScreen extends Screen implements GameListener {
     protected java.util.Random random;
     protected Utils.Point lastTile;
     protected ArrayList<Rflower> flowers;
-    protected BossScreen sparkWolfScreen, clawBearScreen, shadowBatScreen, slimeBossScreen,slimeBossScreen2,slimeBossScreen3;
+    protected BossScreen sparkWolfScreen, clawBearScreen, shadowBatScreen, slimeBossScreen,slimeBossScreen2,slimeBossScreen3,mageBossScreen;
     protected int boss1hp = 150;
     protected int boss1attack = 15;
     protected int boss1exp = 60;
     protected int boss2hp = 230;
     protected int boss2attack = 22;
     protected int boss2exp = 100;
+    protected int boss3hp = 300;
+    protected int boss3attack = 30;
+    protected int boss3exp = 150;
+    protected int boss4hp = 400;
+    protected int boss4attack = 35;
+    protected int boss4exp = 200;
     // desert fights
     protected BossScreen sandScorpionScreen, desertCobraScreen, magmaGolemScreen, emberHawkScreen;
     protected BossScreen[] randomBosses;
@@ -192,13 +198,25 @@ public class PlayLevelScreen extends Screen implements GameListener {
             boss2attack += boss2attack / 2;
             boss2exp += boss2exp * 2;
         }
+         if (player.getLevel() < 12) {
+            boss3hp += boss3hp / 3;
+            boss3attack += boss3attack / 3;
+            boss3exp += boss3exp * 3;
+        }
+
+        if (player.getLevel() < 18) {
+            boss4hp += boss4hp / 3;
+            boss4attack += boss4attack / 3;
+            boss4exp += boss4exp * 2;
+        }
 
         sparkWolfScreen = new BossScreen(this, "Spark Wolf", "SparkWolf.png", new Move[] {new electricBite(), new Bite(), new Roar(), new Scratch()}, 90, 9, 30);
         clawBearScreen = new BossScreen(this, "Claw Bear", "ClawBear.png", new Move[] {new Honeycomb(), new Roar(), new Growl(), new Scratch()}, 120, 8, 35);
         shadowBatScreen = new BossScreen(this, "ShadowBat", "ShadowBat.png", new Move[] {new VampBite(), new Roar(), new Bite(), new Scratch()}, 80, 10, 30);
-        slimeBossScreen = new BossScreen(this, "Slimeboss", "Boss1.png", new Move[] {new Slimeball(), new Growl(), new VampBite(), new Scratch()}, boss1hp, boss1attack, 60);
-        slimeBossScreen2 = new BossScreen(this, "Raging Slime", "Boss2.png", new Move[] {new Haymaker(), new Roar(), new VampBite(), new Slimeball()}, boss2hp, boss2attack, 100);
-        slimeBossScreen3 = new BossScreen(this, "King Slime", "Boss3.png", new Move[] {new Slimeball(), new Haymaker(), new OmniChant(), new CureWounds()}, 300, 15, 175);
+        slimeBossScreen = new BossScreen(this, "Slimeboss", "Boss1.png", new Move[] {new Slimeball(), new Growl(), new VampBite(), new Scratch()}, boss1hp, boss1attack, boss1exp);
+        slimeBossScreen2 = new BossScreen(this, "Raging Slime", "Boss2.png", new Move[] {new Haymaker(), new Roar(), new VampBite(), new Slimeball()}, boss2hp, boss2attack, boss2exp);
+        mageBossScreen = new BossScreen(this, "Mage", "Mage.png", new Move[] {new Worldfire(), new Haymaker(), new OmniChant(), new VampBite()}, boss4hp, boss4attack, boss4exp);
+        slimeBossScreen3 = new BossScreen(this, "King Slime", "Boss3.png", new Move[] {new Slimeball(), new Haymaker(), new OmniChant(), new CureWounds()}, boss3hp, boss3attack, boss3exp);
         sandScorpionScreen = new BossScreen(this, "Sand Scorpion", "SandScorpion.png", new Move[] {new Scratch(), new electricBite(), new Bite(), new Brace()}, 130, 13, 100);
         desertCobraScreen = new BossScreen(this, "Desert Cobra", "DesertCobra.png", new Move[] {new Growl(), new VigorUp(), new Slash(), new Taunt()}, 175, 18, 140);
         magmaGolemScreen = new BossScreen(this, "Magma Golem", "MagmaGolem.png", new Move[] {new SacredFlame(), new VampBite(), new VigorUp(), new Haymaker()}, 300, 25, 225);
@@ -286,8 +304,22 @@ public class PlayLevelScreen extends Screen implements GameListener {
     @Override
     public void onFight() {
         // when this method is called within the game, it signals that a boss fight has been triggered
-        currentBoss = (map == secondMap) ? 2 : 1;
-        startBossFight(currentBoss == 1 ? slimeBossScreen : slimeBossScreen2);
+       BossScreen fightScreen;
+
+        if(map == rockyPathMap){
+            currentBoss = 1;
+            fightScreen = slimeBossScreen;
+        } else if(map == secondMap){
+            currentBoss = 2;
+            fightScreen = slimeBossScreen2;
+        } else if(map == caveMap){
+            currentBoss = 3;
+            fightScreen = slimeBossScreen3;
+        }
+        else
+            fightScreen = slimeBossScreen;  // default to the first boss if something goes wrong
+
+        startBossFight(fightScreen);
         MusicPlayer.playMusic("src/music/battle-music.wav");
         // reset HP/menus so a rematch (after losing) starts fresh instead of reusing the last fight's state
         //cutawayScreen.initialize();
@@ -338,6 +370,10 @@ public class PlayLevelScreen extends Screen implements GameListener {
                 onBoss1Defeated();
             } else if (currentBoss == 2) {
                 onBoss2Defeated();
+            }else if (currentBoss == 3) {
+                onBoss3Defeated();
+            }else if (currentBoss == 4) {
+                //mageDefeated();
             }
         }
         returnFromEncounter(playerLost);
@@ -458,7 +494,6 @@ public class PlayLevelScreen extends Screen implements GameListener {
             map.getTextbox().addText("Use 'E' to open the menu and equip it!");
             map.getTextbox().setIsActive(true);
             player.lock();
-            openDesertBossExit();
         }
     }
 
@@ -586,6 +621,11 @@ public class PlayLevelScreen extends Screen implements GameListener {
             if (flagManager.isFlagSet(flag)) {
                 count++;
             }
+        }
+        if (count == 9) {
+            // all moves unlocked, allows player to fight wizard boss
+            // Implement
+            flagManager.setFlag("MageBossUnlocked");
         }
         return count;
     }
