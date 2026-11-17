@@ -1,9 +1,11 @@
 package Screens;
 
 import Battle.Move;
+import Battle.OmniChant;
 import Engine.*;
 
 import java.awt.*;
+import java.util.ArrayList;
 
 public class SwapMovesScreen extends Screen {
     protected KeyLocker keyLocker = new KeyLocker();
@@ -52,7 +54,7 @@ public class SwapMovesScreen extends Screen {
         if (Keyboard.isKeyDown(Key.ENTER) && !keyLocker.isKeyLocked(Key.ENTER)) {
             keyLocker.lockKey(Key.ENTER);
             if (selectingReplacement) {
-                Move[] availableMoves = playLevelScreen.getAvailableMoves();
+                Move[] availableMoves = getVisibleAvailableMoves();
                 if (playLevelScreen.isMoveUnlocked(availableMoves[selectedAvailableMoveIndex])) {
                     playLevelScreen.equipMove(firstMoveToSwap, availableMoves[selectedAvailableMoveIndex]);
                     firstMoveToSwap = -1;
@@ -88,7 +90,7 @@ public class SwapMovesScreen extends Screen {
             return;
         }
 
-        int availableMoveCount = playLevelScreen.getAvailableMoves().length;
+        int availableMoveCount = getVisibleAvailableMoves().length;
         int rowCount = Math.min(5, availableMoveCount);
         int columnCount = (availableMoveCount + rowCount - 1) / rowCount;
         int column = selectedAvailableMoveIndex / rowCount;
@@ -154,6 +156,16 @@ public class SwapMovesScreen extends Screen {
         keyLocker.lockKey(key);
     }
 
+    private Move[] getVisibleAvailableMoves() {
+        ArrayList<Move> visibleMoves = new ArrayList<>();
+        for (Move move : playLevelScreen.getAvailableMoves()) {
+            if (!(move instanceof OmniChant) || playLevelScreen.isMoveUnlocked(move)) {
+                visibleMoves.add(move);
+            }
+        }
+        return visibleMoves.toArray(new Move[0]);
+    }
+
     @Override
     public void draw(GraphicsHandler graphicsHandler) {
         graphicsHandler.drawFilledRectangle(0, 0, ScreenManager.getScreenWidth(), ScreenManager.getScreenHeight(), Color.black);
@@ -209,7 +221,7 @@ public class SwapMovesScreen extends Screen {
 
     private void drawAvailableMoves(GraphicsHandler graphicsHandler, Graphics2D graphics, Font titleFont,
             Font moveFont, Font instructionsFont, Move[] equippedMoves) {
-        Move[] availableMoves = playLevelScreen.getAvailableMoves();
+        Move[] availableMoves = getVisibleAvailableMoves();
         String title = "Choose a Replacement for " + equippedMoves[firstMoveToSwap].getName();
         FontMetrics titleMetrics = graphics.getFontMetrics(titleFont);
         graphicsHandler.drawString(title,

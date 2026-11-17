@@ -2,6 +2,7 @@ package Level;
 
 import Battle.CureWounds;
 import Battle.Move;
+import Battle.OmniChant;
 import Battle.BlindingLight;
 import Battle.Slash;
 import Battle.Hawkeye;
@@ -12,6 +13,8 @@ import Battle.VigorUp;
 import Battle.Slimeball;
 import Battle.Haymaker;
 import Battle.HighJumpKick;
+import Battle.LockIn;
+
 import java.awt.Color;
 import java.util.ArrayList;
 
@@ -28,7 +31,7 @@ public abstract class Player extends GameObject {
     private final Move[] availableMoves = {
             new Slash(), new BlindingLight(), new VigorUp(), new CureWounds(),
             new Hawkeye(), new Brace(), new Taunt(), new SacredFlame(), new Slimeball(), 
-            new Haymaker(), new HighJumpKick()
+            new Haymaker(), new HighJumpKick(), new LockIn(), new OmniChant()
     };
     private final Move[] equippedMoves = {
             availableMoves[0], availableMoves[1], availableMoves[2], availableMoves[3]
@@ -252,6 +255,7 @@ public abstract class Player extends GameObject {
         }
         return levelsGained;
     }
+
     public Move[] getAvailableMoves() { return availableMoves.clone(); }
 
     public void equipMove(int moveIndex, Move move) {

@@ -8,6 +8,7 @@ import Battle.Haymaker;
 import Battle.HighJumpKick;
 import Battle.Honeycomb;
 import Battle.Move;
+import Battle.LockIn;
 import Battle.Roar;
 import Battle.SacredFlame;
 import Battle.Scratch;
@@ -16,6 +17,8 @@ import Battle.Taunt;
 import Battle.VampBite;
 import Battle.VigorUp;
 import Battle.electricBite;
+import Battle.OmniChant;
+import Battle.Worldfire;
 import Engine.GraphicsHandler;
 import Engine.Screen;
 import EnhancedMapTiles.Rflower;
@@ -51,6 +54,10 @@ public class PlayLevelScreen extends Screen implements GameListener {
     protected java.util.Random random;
     protected Utils.Point lastTile;
     protected ArrayList<Rflower> flowers;
+    protected int boss1hp = 150;
+    protected int boss1attack = 15;
+    protected int boss2hp = 230;
+    protected int boss2attack = 22;
     protected BossScreen sparkWolfScreen, clawBearScreen, shadowBatScreen, slimeBossScreen,slimeBossScreen2;
     // desert fights
     protected BossScreen sandScorpionScreen, desertCobraScreen, magmaGolemScreen, emberHawkScreen;
@@ -109,10 +116,12 @@ public class PlayLevelScreen extends Screen implements GameListener {
         flagManager.addFlag("move4Unlocked", false);
         flagManager.addFlag("move5Unlocked", false);
         flagManager.addFlag("move6Unlocked", false);
+        flagManager.addFlag("move7Unlocked", false);
+        flagManager.addFlag("move8Unlocked", false);
+        flagManager.addFlag("omniChantUnlocked", false);
         flagManager.addFlag("killQuestStarted", false);
         flagManager.addFlag("killQuestReady", false);
         flagManager.addFlag("killQuestComplete", false);
-        flagManager.addFlag("move7Unlocked", false);
         roamingEnemiesDefeated = 0;
 
         flagManager.addFlag("impRaceStarted", false);   // the imp has explained the race at least once
@@ -159,15 +168,25 @@ public class PlayLevelScreen extends Screen implements GameListener {
                 new Roar(), new Bite(), new electricBite(), new Scratch()
         });
 
-        sparkWolfScreen = new BossScreen(this, "Spark Wolf", "SparkWolf.png", new Move[] {new electricBite(), new Roar(), new Growl(), new Scratch()}, 90, 9, 30);
+        if (player.getLevel() < 4) {
+            boss1hp += boss1hp / 2;
+            boss1attack += boss1attack / 2;
+        }
+
+        if (player.getLevel() < 7) {
+            boss2hp += boss2hp / 2;
+            boss2attack += boss2attack / 2;
+        }
+
+        sparkWolfScreen = new BossScreen(this, "Spark Wolf", "SparkWolf.png", new Move[] {new electricBite(), new Bite(), new Roar(), new Scratch()}, 90, 9, 30);
         clawBearScreen = new BossScreen(this, "Claw Bear", "ClawBear.png", new Move[] {new Honeycomb(), new Roar(), new Growl(), new Scratch()}, 120, 8, 35);
         shadowBatScreen = new BossScreen(this, "ShadowBat", "ShadowBat.png", new Move[] {new VampBite(), new Roar(), new Bite(), new Scratch()}, 80, 10, 30);
-        slimeBossScreen = new BossScreen(this, "Slimeboss", "Boss1.png", new Move[] {new Slimeball(), new Growl(), new VampBite(), new Scratch()}, 150, 10, 60);
-        slimeBossScreen2 = new BossScreen(this, "Raging Slime", "Boss2.png", new Move[] {new Haymaker(), new Roar(), new VampBite(), new Slimeball()}, 220, 12, 100);       
         sandScorpionScreen = new BossScreen(this, "Sand Scorpion", "SandScorpion.png", new Move[] {new Scratch(), new electricBite(), new Bite(), new Brace()}, 100, 10, 100);
         desertCobraScreen = new BossScreen(this, "Desert Cobra", "DesertCobra.png", new Move[] {new Growl(), new VigorUp(), new Slash(), new Taunt()}, 10, 10, 10);
         magmaGolemScreen = new BossScreen(this, "Magma Golem", "MagmaGolem.png", new Move[] {new SacredFlame(), new VampBite(), new VigorUp(), new Haymaker()}, 10, 10, 10);
         emberHawkScreen = new BossScreen(this, "Ember Hawk", "EmberHawk.png", new Move[] {new Bite(), new Growl(), new Hawkeye(), new Slash()}, 10, 10, 10);
+        slimeBossScreen = new BossScreen(this, "Slimeboss", "Boss1.png", new Move[] {new Slimeball(), new Growl(), new VampBite(), new Scratch()}, boss1hp, boss1attack, 60);
+        slimeBossScreen2 = new BossScreen(this, "Raging Slime", "Boss2.png", new Move[] {new Haymaker(), new Roar(), new VampBite(), new Slimeball()}, boss2hp, boss2attack, 100);
         randomBosses = new BossScreen[] { sparkWolfScreen, clawBearScreen, shadowBatScreen };
         desertBosses = new BossScreen[] { sandScorpionScreen, desertCobraScreen };
         lastTile = map.getTileIndexByPosition(player.getX(), player.getY());
@@ -183,13 +202,14 @@ public class PlayLevelScreen extends Screen implements GameListener {
             case RUNNING:
                 player.update();
                 if (playLevelScreenState == PlayLevelScreenState.RUNNING) {
-                    map.update(player);
-                    updateImpRace();
-                    checkForRoamingEnemyContact();
-                    checkForRoamingEnemyContact();
-                    encounterChance();
-                    checkForMapExit();
-                }
+                map.update(player);
+                updateImpRace();
+                checkForRoamingEnemyContact();
+            if (playLevelScreenState == PlayLevelScreenState.RUNNING) {
+                encounterChance();
+                checkForMapExit();
+            }
+}
                 break;
             // if level has been completed, bring up level cleared screen
             case LEVEL_COMPLETED:
@@ -582,6 +602,12 @@ public class PlayLevelScreen extends Screen implements GameListener {
         }
         if (move instanceof HighJumpKick) {
             return flagManager.isFlagSet("move7Unlocked");
+        }
+        if (move instanceof LockIn) {
+            return flagManager.isFlagSet("move8Unlocked");
+        }
+        if (move instanceof OmniChant) {
+            return flagManager.isFlagSet("omniChantUnlocked");
         }
         
         return true;

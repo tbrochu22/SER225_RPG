@@ -48,11 +48,15 @@ public class EncounterScreen extends Screen {
     protected String playerTurnBurnMessage = "";
     protected String lastEnemyTurnMessage = "";
     protected int playerBurnMessageDelay;
+    protected int playerBurnCounter = 0;
+    protected int enemyBurnCounter = 0;
     protected int lifestealAmount;
     protected boolean isChargingPlayer = false;
     protected boolean isChargingEnemy = false;
     protected boolean usedHaymakerPlayer = false;
     protected boolean usedHaymakerEnemy = false;
+    protected boolean playerAccuracyBypass = false;
+    protected boolean enemyAccuracyBypass = false;
     protected int resultScreenTimer;
     protected SpriteFont playerLabel;
     protected SpriteFont enemyLabel;
@@ -107,7 +111,15 @@ public class EncounterScreen extends Screen {
                 }
                 return move.getName() + " missed! The user crashed and took " + move.getEffect() + " damage!";
             }
-            return move.getName() + " missed!";
+            if (playerAccuracyBypass || enemyAccuracyBypass) {
+                if (playerAttacking) {
+                    playerAccuracyBypass = false;
+                } else {
+                    enemyAccuracyBypass = false;
+                }
+            } else {
+                return move.getName() + " missed!";
+            }
         }
         startAnimation(move, playerAttacking);
 
@@ -158,6 +170,10 @@ public class EncounterScreen extends Screen {
                     playerDefenseBuff += move.getEffect();
                 } else if (move.getType().equals("Atk Lower Attack")) {
                     enemyAttackBuff += Math.abs(move.getEffect());
+                } else if (move.getType().equals("Burn Attack")) {
+                    enemyBurnCounter += 1;
+                    enemyBurned = true;
+                    enemyHp = Math.max(1, enemyHp - (enemyHp / 2));
                 }
             } else {
                 if (enemyProtected == true) {
@@ -167,6 +183,10 @@ public class EncounterScreen extends Screen {
                     playerDefenseBuff += move.getEffect();
                 } else if (move.getType().equals("Attack Buff")) {
                     playerAttackBuff += move.getEffect();
+                } else if (move.getType().equals("Omni")) {
+                    playerAttackBuff += move.getEffect();
+                    playerDefenseBuff += move.getEffect();
+                    playerHp = Math.max(1, playerHp - (playerMaxHp / 3));
                 } else if (move.getType().equals("Healing")) {
                     playerHp = Math.min(playerMaxHp, playerHp + move.getEffect());
                 } else if (move.getType().equals("Attack Debuff")) {
@@ -178,7 +198,10 @@ public class EncounterScreen extends Screen {
                 } else if (move.getType().equals("Protect")) {
                     playerProtected = true;
                 } else if (move.getType().equals("Burn")) {
+                    enemyBurnCounter += 1;
                     enemyBurned = true;
+                } else if (move.getType().equals("Lock")) {
+                    playerAccuracyBypass = true;
                 }
             }
         } else {
@@ -227,6 +250,10 @@ public class EncounterScreen extends Screen {
                     enemyDefenseBuff += move.getEffect();
                 } else if (move.getType().equals("Atk Lower Attack")) {
                     playerAttackBuff += Math.abs(move.getEffect());
+                } else if (move.getType().equals("Burn Attack")) {
+                    playerBurnCounter += 1;
+                    playerBurned = true;
+                    playerHp = Math.max(1, playerHp - (playerHp / 2));
                 }
             } else {
                 if (playerProtected == true) {
@@ -236,6 +263,10 @@ public class EncounterScreen extends Screen {
                     enemyDefenseBuff += move.getEffect();
                 } else if (move.getType().equals("Attack Buff")) {
                     enemyAttackBuff += move.getEffect();
+                } else if (move.getType().equals("Omni")) {
+                    enemyAttackBuff += move.getEffect();
+                    enemyDefenseBuff += move.getEffect();
+                    enemyHp = Math.max(1, enemyHp - (enemyMaxHp / 3));
                 } else if (move.getType().equals("Defense Debuff")) {
                     playerDefenseBuff -= Math.abs(move.getEffect());
                 } else if (move.getType().equals("Attack Debuff")) {
@@ -247,20 +278,10 @@ public class EncounterScreen extends Screen {
                 } else if (move.getType().equals("Protect")) {
                     enemyProtected = true;
                 } else if (move.getType().equals("Burn")) {
+                    playerBurnCounter += 1;
                     playerBurned = true;
-
-                } else if (move.getType().equals("Healing")) {
-                    enemyHp = Math.min(enemyMaxHp, enemyHp + move.getEffect());
-                } else if (move.getType().equals("Attack Debuff")) {
-                    playerAttackBuff += Math.abs(move.getEffect());
-                } else if (move.getType().equals("Defense Debuff")) {
-                    playerDefenseBuff += Math.abs(move.getEffect());
-                } else if (move.getType().equals("Stun")) {
-                    playerStunned = true;
-                } else if (move.getType().equals("Protect")) {
-                    enemyProtected = true;
-                } else if (move.getType().equals("Burn")) {
-                    playerBurned = true;
+                } else if (move.getType().equals("Lock")) {
+                    enemyAccuracyBypass = true;
                 }
             }
         }
@@ -280,6 +301,8 @@ public class EncounterScreen extends Screen {
                 return move.getName() + " hit for " + (damageCalcPlayer) + " damage and increased user's defense by " + move.getEffect() + "!";
             } else if (move.getType().equals("Atk Lower Attack")) {
                 return move.getName() + " hit for " + (damageCalcPlayer) + " damage and lowered enemy's attack by " + Math.abs(move.getEffect()) + "!";
+            } else if (move.getType().equals("Burn Attack")) {
+                return move.getName() + " halved the enemy's health and burned them!";
             }
             
             return move.getName() + " hit for " + (damageCalcPlayer) + " damage!";
@@ -301,6 +324,8 @@ public class EncounterScreen extends Screen {
                 return move.getName() + " hit for " + (damageCalcEnemy) + " damage and increased user's defense by " + move.getEffect() + "!";
             } else if (move.getType().equals("Atk Lower Attack")) {
                 return move.getName() + " hit for " + (damageCalcEnemy) + " damage and lowered enemy's attack by " + Math.abs(move.getEffect()) + "!";
+            } else if (move.getType().equals("Burn Attack")) {
+                return move.getName() + " halved the enemy's health and burned them!";
             }
 
             return move.getName() + " hit for " + (damageCalcEnemy) + " damage!";
@@ -311,6 +336,9 @@ public class EncounterScreen extends Screen {
         }
         if (move.getType().equals("Attack Buff")) {
             return move.getName() + " increased user's attack by " + move.getEffect() + "!";
+        }
+        if (move.getType().equals("Omni")) {
+            return move.getName() + " increased user's attack and defense by " + move.getEffect() + " each, but sacrificed 30% of their health!";
         }
         if (move.getType().equals("Healing")) {
             return move.getName() + " restored " + Math.abs(move.getEffect()) + " HP!";
@@ -329,6 +357,9 @@ public class EncounterScreen extends Screen {
         }
         if (move.getType().equals("Burn")) {
             return move.getName() + " burned the enemy!";
+        }
+        if (move.getType().equals("Lock")) {
+            return move.getName() + " will guarantee the next move to hit!";
         }
         return move.getName() + " had no effect!";
     }
@@ -436,6 +467,12 @@ public class EncounterScreen extends Screen {
         enemyBurned = false;
         playerBurnProcessedThisTurn = false;
         enemyBurnProcessedThisTurn = false;
+        playerBurnCounter = 0;
+        enemyBurnCounter = 0;
+        usedHaymakerPlayer = false;
+        usedHaymakerEnemy = false;
+        playerAccuracyBypass = false;
+        enemyAccuracyBypass = false;
         lifestealAmount = 0;
         isChargingPlayer = false;
         isChargingEnemy = false;
@@ -500,8 +537,8 @@ public class EncounterScreen extends Screen {
             if (enemyTurnDelay == 0 && enemyHp > 0 && playerHp > 0) {
                 String enemyBurnMessage = "";
                 if (enemyBurned && !enemyBurnProcessedThisTurn) {
-                    enemyHp = Math.max(0, enemyHp - 5);
-                    enemyBurnMessage = "Enemy took 5 damage from the burn!";
+                    enemyHp = Math.max(0, enemyHp - (enemyBurnCounter * 5));
+                    enemyBurnMessage = "Enemy took " + (enemyBurnCounter * 5) + " damage from the burn!";
                     enemyBurnProcessedThisTurn = true;
                     lastEnemyTurnMessage = enemyBurnMessage;
                     battleMessage = enemyBurnMessage;
@@ -553,8 +590,8 @@ public class EncounterScreen extends Screen {
         if (enemyTurnDelay == 0 && !playerBurnProcessedThisTurn) {
             playerBurnProcessedThisTurn = true;
             if (playerBurned == true) {
-                playerHp = Math.max(0, playerHp - 5);
-                playerTurnBurnMessage = "You took 5 damage from the burn!";
+                playerHp = Math.max(0, playerHp - (playerBurnCounter * 5));
+                playerTurnBurnMessage = "You took " + (playerBurnCounter * 5) + " damage from the burn!";
                 battleMessage = (lastEnemyTurnMessage.isEmpty()
                         ? ""
                         : lastEnemyTurnMessage + "\n") + playerTurnBurnMessage;
