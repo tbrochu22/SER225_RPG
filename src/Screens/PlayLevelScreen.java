@@ -16,6 +16,7 @@ import Battle.Scratch;
 import Battle.Slimeball;
 import Battle.Taunt;
 import Battle.VampBite;
+import Battle.VigorUp;
 import Battle.electricBite;
 import Battle.OmniChant;
 import Battle.Worldfire;
@@ -38,6 +39,9 @@ import Utils.Direction;
 import Utils.Point;
 import java.util.ArrayList;
 import java.util.Random;
+import Battle.Slash;
+import java.awt.Color;
+import java.awt.Font;
 
 public class PlayLevelScreen extends Screen implements GameListener {
     protected ScreenCoordinator screenCoordinator;
@@ -55,14 +59,30 @@ public class PlayLevelScreen extends Screen implements GameListener {
     protected BossScreen sparkWolfScreen, clawBearScreen, shadowBatScreen, slimeBossScreen,slimeBossScreen2,slimeBossScreen3;
     protected int boss1hp = 150;
     protected int boss1attack = 15;
+    protected int boss1exp = 60;
     protected int boss2hp = 230;
     protected int boss2attack = 22;
+    protected int boss2exp = 100;
+    // desert fights
+    protected BossScreen sandScorpionScreen, desertCobraScreen, magmaGolemScreen, emberHawkScreen;
     protected BossScreen[] randomBosses;
     protected BossScreen currentFight;
     protected RoamingEnemy currentRoamingEnemy;
     protected int enemyCooldown = 0;
     protected int roamingEnemiesDefeated = 0;
     public static final int ROAMING_KILLS_NEEDED = 3;
+    // the imp's script sets the "impRaceRunning" flag to start the race; this screen runs the timer and checks the finish line
+    public static final int IMP_ID = 10;
+    public static final int RACE_TIME_SECONDS = 12;
+    protected boolean raceActive = false;
+    protected int raceFramesLeft = 0;
+    private static final int RACE_FINISH_ROW = 26;
+    private static final int RACE_FINISH_START_X = 1;
+    private static final int RACE_FINISH_END_X = 4;
+    private static final int RACE_START_X = 36;
+    private static final int RACE_START_Y = 3;
+    private static final int IMP_FINISH_X = 5;
+    private static final int IMP_FINISH_Y = 27;
 
     // each map is only built once and then reused, so going back to a map keeps its state
     // (flowers already touched, items already picked up, boulders already cleared, etc.)
@@ -75,6 +95,11 @@ public class PlayLevelScreen extends Screen implements GameListener {
     protected boolean caveGateOpen;
     // true while the "gate is sealed" message has been shown for the current approach, so it doesn't re-trigger every frame
     protected boolean caveGateHintShown;
+    // the skull-and-bones tiles in second_map.txt (the 8s), as {x, y}
+    protected static final int[][] BONE_SPOTS = { {1, 8}, {5, 9}, {11, 10}, {9, 25}, {15, 28}, {31, 26} };
+    // like lastTile, but for the knight's feet
+    protected Point lastFeetTile = new Point(-1, -1);
+    protected BossScreen[] desertBosses;
     // which boss the current/last boss fight is against (1 = slime on the rocky path, 2 = octopus in the desert)
     protected int currentBoss;
 
@@ -108,6 +133,11 @@ public class PlayLevelScreen extends Screen implements GameListener {
         flagManager.addFlag("killQuestReady", false);
         flagManager.addFlag("killQuestComplete", false);
         roamingEnemiesDefeated = 0;
+
+        flagManager.addFlag("impRaceStarted", false);   // the imp has explained the race at least once
+        flagManager.addFlag("impRaceRunning", false);   // set by the imp's script to start the timer
+        flagManager.addFlag("impRaceWon", false);
+        raceActive = false;
 
         // define/setup map
         rockyPathMap = new RockyPathMap();
@@ -154,11 +184,13 @@ public class PlayLevelScreen extends Screen implements GameListener {
         if (player.getLevel() < 4) {
             boss1hp += boss1hp / 2;
             boss1attack += boss1attack / 2;
+            boss1exp += boss1exp * 2;
         }
 
         if (player.getLevel() < 7) {
             boss2hp += boss2hp / 2;
             boss2attack += boss2attack / 2;
+            boss2exp += boss2exp * 2;
         }
 
         sparkWolfScreen = new BossScreen(this, "Spark Wolf", "SparkWolf.png", new Move[] {new electricBite(), new Bite(), new Roar(), new Scratch()}, 90, 9, 30);
@@ -167,7 +199,12 @@ public class PlayLevelScreen extends Screen implements GameListener {
         slimeBossScreen = new BossScreen(this, "Slimeboss", "Boss1.png", new Move[] {new Slimeball(), new Growl(), new VampBite(), new Scratch()}, boss1hp, boss1attack, 60);
         slimeBossScreen2 = new BossScreen(this, "Raging Slime", "Boss2.png", new Move[] {new Haymaker(), new Roar(), new VampBite(), new Slimeball()}, boss2hp, boss2attack, 100);
         slimeBossScreen3 = new BossScreen(this, "King Slime", "Boss3.png", new Move[] {new Slimeball(), new Haymaker(), new OmniChant(), new CureWounds()}, 300, 15, 175);
+        sandScorpionScreen = new BossScreen(this, "Sand Scorpion", "SandScorpion.png", new Move[] {new Scratch(), new electricBite(), new Bite(), new Brace()}, 130, 13, 100);
+        desertCobraScreen = new BossScreen(this, "Desert Cobra", "DesertCobra.png", new Move[] {new Growl(), new VigorUp(), new Slash(), new Taunt()}, 175, 18, 140);
+        magmaGolemScreen = new BossScreen(this, "Magma Golem", "MagmaGolem.png", new Move[] {new SacredFlame(), new VampBite(), new VigorUp(), new Haymaker()}, 300, 25, 225);
+        emberHawkScreen = new BossScreen(this, "Ember Hawk", "EmberHawk.png", new Move[] {new SacredFlame(), new Growl(), new Hawkeye(), new Slash()}, 250, 20, 175);
         randomBosses = new BossScreen[] { sparkWolfScreen, clawBearScreen, shadowBatScreen };
+        desertBosses = new BossScreen[] { sandScorpionScreen, desertCobraScreen };
         lastTile = map.getTileIndexByPosition(player.getX(), player.getY());
         random = new Random();
         monsterNameStrings = new String[] {"Monster x", "Monster y", "Monster z"};
@@ -181,13 +218,14 @@ public class PlayLevelScreen extends Screen implements GameListener {
             case RUNNING:
                 player.update();
                 if (playLevelScreenState == PlayLevelScreenState.RUNNING) {
-                    map.update(player);
-                    checkForRoamingEnemyContact();
-                    if(playLevelScreenState == PlayLevelScreenState.RUNNING){
-                    encounterChance();
-                    checkForMapExit();
-                    }
-                }
+                map.update(player);
+                updateImpRace();
+                checkForRoamingEnemyContact();
+            if (playLevelScreenState == PlayLevelScreenState.RUNNING) {
+                encounterChance();
+                checkForMapExit();
+            }
+}
                 break;
             // if level has been completed, bring up level cleared screen
             case LEVEL_COMPLETED:
@@ -231,6 +269,10 @@ public class PlayLevelScreen extends Screen implements GameListener {
         case "Spark Wolf": return sparkWolfScreen;
         case "Claw Bear":  return clawBearScreen;
         case "Shadow Bat": return shadowBatScreen;
+        case "Sand Scorpion": return sandScorpionScreen;
+        case "Desert Cobra": return desertCobraScreen;
+        case "Magma Golem": return magmaGolemScreen;
+        case "Ember Hawk": return emberHawkScreen;
         default:           return sparkWolfScreen;
     }
     }
@@ -257,6 +299,9 @@ public class PlayLevelScreen extends Screen implements GameListener {
         switch (playLevelScreenState) {
             case RUNNING:
                 map.draw(player, graphicsHandler);
+                if (raceActive) {
+                    drawImpRace(graphicsHandler);
+                }
                 break;
             case LEVEL_COMPLETED:
                 winScreen.draw(graphicsHandler);
@@ -769,6 +814,21 @@ enemyCooldown = 60;
                 }
             }
         }
+        // bones in the desert work just like the flowers above
+        if (map == secondMap && playLevelScreenState == PlayLevelScreenState.RUNNING) {
+            Rectangle body = player.getBounds();
+            Point feetTile = map.getTileIndexByPosition((body.getX1() + body.getX2()) / 2f, (body.getY1() + body.getY2()) / 2f);
+            for (int[] bone : BONE_SPOTS) {
+                if (feetTile.x == bone[0] && feetTile.y == bone[1]) {
+                    if (feetTile.x != lastFeetTile.x || feetTile.y != lastFeetTile.y) {
+                    currentBoss = 0;
+                    startBossFight(desertBosses[random.nextInt(desertBosses.length)]);
+                    MusicPlayer.playMusic("src/music/battle-music.wav");
+                    }
+                }
+            }
+    lastFeetTile = feetTile;
+        }
         lastTile = map.getTileIndexByPosition(player.getX(), player.getY());
         //System.out.println(currentTile + " " + flowerTile);
     }
@@ -780,5 +840,115 @@ enemyCooldown = 60;
         else if (map == secondMap) {
             MusicPlayer.playMusic("src/music/mfcc-game-game-music-603130.wav");
         }
+    }
+        // ---------------- imp race (Taunt side quest) ----------------
+
+    // called every frame while the map is running: starts the race when the imp's script asks for it,
+    // counts down the timer, and checks whether the player has crossed the finish line
+    private void updateImpRace() {
+        if (!raceActive) {
+            if (map == thirdMap && flagManager.isFlagSet("impRaceRunning")) {
+                raceActive = true;
+                raceFramesLeft = RACE_TIME_SECONDS * 60;   // the game runs at 60 frames per second
+            }
+            return;
+        }
+
+        // walking off the volcano map mid-race calls it off (the imp offers a rematch next time)
+        if (map != thirdMap) {
+            endImpRace();
+            return;
+        }
+
+        // the clock stops while a textbox is open (for example if a roaming enemy fight just ended)
+        if (map.getTextbox().isActive()) {
+            return;
+        }
+
+        Point currentTile = map.getTileIndexByPosition(player.getX(), player.getY());
+        if (currentTile.y >= RACE_FINISH_ROW
+                && currentTile.x >= RACE_FINISH_START_X && currentTile.x <= RACE_FINISH_END_X) {
+            winImpRace();
+            return;
+        }
+
+        raceFramesLeft--;
+        if (raceFramesLeft <= 0) {
+            loseImpRace();
+        }
+    }
+
+        private void endImpRace() {
+        raceActive = false;
+        flagManager.unsetFlag("impRaceRunning");
+    }
+
+    private void winImpRace() {
+        endImpRace();
+        flagManager.setFlag("impRaceWon");
+        flagManager.setFlag("move3Unlocked");
+
+        // the imp "teleports" to the finish line, so it's standing there when the player arrives
+        NPC imp = map.getNPCById(IMP_ID);
+        if (imp != null) {
+            Point finish = map.getMapTile(IMP_FINISH_X, IMP_FINISH_Y).getLocation();
+            imp.setLocation(finish.x, finish.y);
+            imp.facePlayer(player);
+        }
+
+        float secondsLeft = raceFramesLeft / 60f;
+        map.getTextbox().addText("You made it with " + String.format("%.1f", secondsLeft) + " seconds to spare!");
+        map.getTextbox().addText("The imp appears in a puff of smoke, fuming.");
+        map.getTextbox().addText("\"No way! NO WAY! You cheated! ...Ugh, fine.\"");
+        map.getTextbox().addText("\"Watch closely. This is how you make 'em mad.\"");
+        map.getTextbox().addText("You learned " + new Taunt().getName() + "!");
+        map.getTextbox().addText("Use 'E' to open the menu and equip it!");
+        map.getTextbox().setIsActive(true);
+        player.lock();
+    }
+
+    private void loseImpRace() {
+        endImpRace();
+
+        // put the player back at the start line, next to the imp, so a rematch is one button press away
+        Point start = map.getMapTile(RACE_START_X, RACE_START_Y).getLocation();
+        player.setLocation(start.x, start.y);
+        player.setFacingDirection(Direction.UP);
+        lastTile = map.getTileIndexByPosition(player.getX(), player.getY());
+
+        map.getTextbox().addText("Time's up!");
+        map.getTextbox().addText("A puff of smoke drags you back to the start.");
+        map.getTextbox().addText("\"Too slow, clanky! Talk to me to try again.\"");
+        map.getTextbox().setIsActive(true);
+        player.lock();
+    }
+        // draws the checkered finish line on the map and the countdown timer at the top of the screen
+    private void drawImpRace(GraphicsHandler graphicsHandler) {
+        int tileSize = map.getTileset().getScaledSpriteWidth();
+        int square = tileSize / 4;
+        float cameraX = map.getCamera().getX();
+        float cameraY = map.getCamera().getY();
+
+        // finish line: a strip of black and white squares across the path tiles
+        for (int x = RACE_FINISH_START_X; x <= RACE_FINISH_END_X; x++) {
+            Point tile = map.getMapTile(x, RACE_FINISH_ROW).getLocation();
+            int screenX = Math.round(tile.x - cameraX);
+            int screenY = Math.round(tile.y - cameraY);
+            for (int row = 0; row < 2; row++) {
+                for (int col = 0; col < 4; col++) {
+                    Color c = (row + col) % 2 == 0 ? Color.white : Color.black;
+                    graphicsHandler.drawFilledRectangle(screenX + col * square, screenY + row * square, square, square, c);
+                }
+            }
+        }
+
+        // timer box at the top middle of the screen, turns red in the last 5 seconds
+        float secondsLeft = Math.max(0, raceFramesLeft) / 60f;
+        String text = "Imp Race: " + String.format("%.1f", secondsLeft);
+        Color textColor = secondsLeft <= 5 ? new Color(230, 40, 40) : Color.white;
+        int boxWidth = 240;
+        int boxX = (Engine.Config.GAME_WINDOW_WIDTH - boxWidth) / 2;
+        graphicsHandler.drawFilledRectangleWithBorder(boxX, 10, boxWidth, 46, new Color(30, 20, 20), new Color(200, 80, 40), 3);
+        graphicsHandler.drawStringWithOutline(text, boxX + 22, 44, new Font("Arial", Font.BOLD, 26), textColor, Color.black, 2f);
     }
 }
