@@ -8,6 +8,7 @@ import NPCs.Boss2;
 import NPCs.Nomad;
 import Scripts.SecondMap.Boss2Script;
 import Scripts.SecondMap.NomadScript;
+import Scripts.SecondMap.FishermanScript;
 import Tilesets.DesertTileset;
 import java.util.ArrayList;
 import NPCs.RoamingEnemy;
@@ -55,10 +56,7 @@ public class SecondMap extends Map {
         boss2.setInteractScript(new Boss2Script());
         npcs.add(boss2);
         Villager fisher = new Villager(10, getMapTile(9, 6).getLocation(), "OasisFisher.png", Direction.LEFT);
-        fisher.setInteractScript(new SimpleTextScript(new String[] {
-                "Shh... you'll scare the fish.",
-                "I once caught one bigger than a cactus!\nNobody ever believes me."
-        }));
+        fisher.setInteractScript(new FishermanScript());
         npcs.add(fisher);
         Villager merchant = new Villager(11, getMapTile(34, 18).getLocation(), "Merchant.png", Direction.LEFT);
         merchant.setInteractScript(new SimpleTextScript(new String[] {

@@ -24,8 +24,10 @@ public class Boss3Script extends Script {
 
         scriptActions.add(new TextboxScriptAction() {{
             addText("Well well well. Look what we have here...");
-            addText("You will be my next meal!");
             addText("You cannot stand against my power!");
+            addText("I will rule this world!");
+            addText("And devour all who oppose me!");
+            addText("Starting with you!");
         }});
 
         // unlock the player before cutting away so they aren't frozen when control returns to the map

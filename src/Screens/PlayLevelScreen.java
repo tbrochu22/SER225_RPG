@@ -101,6 +101,7 @@ public class PlayLevelScreen extends Screen implements GameListener {
     protected boolean caveGateOpen;
     // true while the "gate is sealed" message has been shown for the current approach, so it doesn't re-trigger every frame
     protected boolean caveGateHintShown;
+    protected boolean pyramidHintShown;
     // the skull-and-bones tiles in second_map.txt (the 8s), as {x, y}
     protected static final int[][] BONE_SPOTS = { {1, 8}, {5, 9}, {11, 10}, {9, 25}, {15, 28}, {31, 26} };
     // like lastTile, but for the knight's feet
@@ -126,6 +127,9 @@ public class PlayLevelScreen extends Screen implements GameListener {
         flagManager.addFlag("archerQuestStarted", false);
         flagManager.addFlag("hasGift", false);
         flagManager.addFlag("archerQuestComplete", false);
+        flagManager.addFlag("fishermanQuestStarted", false);
+        flagManager.addFlag("hasGem", false);
+        flagManager.addFlag("fishermanQuestComplete", false);
         flagManager.addFlag("move1Unlocked", false);
         flagManager.addFlag("move2Unlocked", false);
         flagManager.addFlag("move3Unlocked", false);
@@ -153,6 +157,7 @@ public class PlayLevelScreen extends Screen implements GameListener {
         caveMap = null;
         caveGateOpen = false;
         caveGateHintShown = false;
+        pyramidHintShown = false;
         map = rockyPathMap;
         map.setFlagManager(flagManager);
         playMapMusic();
@@ -565,17 +570,31 @@ public class PlayLevelScreen extends Screen implements GameListener {
                 loadMap(secondMap, DESERT_ARRIVAL_X, DESERT_ARRIVAL_Y, Direction.DOWN);
             }
         } else if (map == secondMap) {
+            boolean touchingPyramidDoor = isTouchingDoorway(PYRAMID_DOOR_X, PYRAMID_DOOR_Y, true);
+            if (!touchingPyramidDoor) {
+                pyramidHintShown = false;
+            }
+
             // walking back up through the opening in the top wall returns to the rocky path
             if (currentTile.y <= DESERT_EXIT_ROW
                     && currentTile.x >= DESERT_EXIT_START_X && currentTile.x <= DESERT_EXIT_END_X) {
                 loadMap(rockyPathMap, ROCKY_RETURN_X, ROCKY_RETURN_Y, Direction.UP);
             }
             // walking up into the pyramid's doorway goes inside
-            else if (isTouchingDoorway(PYRAMID_DOOR_X, PYRAMID_DOOR_Y, true)) {
-                if (pyramidMap == null) {
-                    pyramidMap = new PyramidMap();
+            else if (touchingPyramidDoor) {
+                if (flagManager.isFlagSet("fishermanQuestStarted")) {
+                    if (pyramidMap == null) {
+                        pyramidMap = new PyramidMap();
+                    }
+                    pyramidMap.resetRocksIfPuzzleIncomplete();
+                    loadMap(pyramidMap, PYRAMID_ARRIVAL_X, PYRAMID_ARRIVAL_Y, Direction.UP);
+                } else if (!pyramidHintShown && !map.getTextbox().isActive()) {
+                    pyramidHintShown = true;
+                    map.getTextbox().addText("The pyramid door is sealed.");
+                    map.getTextbox().addText("Maybe someone in the desert knows how to open it.");
+                    map.getTextbox().setIsActive(true);
+                    player.lock();
                 }
-                loadMap(pyramidMap, PYRAMID_ARRIVAL_X, PYRAMID_ARRIVAL_Y, Direction.UP);
             }
             // once Boss2 is beaten, walking down through the opened exit below it goes to the volcano map
             // (row 28 also counts so the player doesn't have to squeeze fully into the bottom row)

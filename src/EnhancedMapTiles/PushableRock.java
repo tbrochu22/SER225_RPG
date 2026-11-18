@@ -6,6 +6,7 @@ import GameObject.Frame;
 import GameObject.GameObject;
 import GameObject.SpriteSheet;
 import Level.EnhancedMapTile;
+import Level.MapTile;
 import Level.Player;
 import Level.PlayerState;
 import Level.TileType;
@@ -17,6 +18,11 @@ import Utils.Point;
 public class PushableRock extends EnhancedMapTile {
     public PushableRock(Point location) {
         super(location.x, location.y, new SpriteSheet(ImageLoader.load("Rock.png"), 16, 16), TileType.NOT_PASSABLE);
+    }
+
+    public boolean isOnTileIndex(int tileIndex) {
+        MapTile currentTile = map.getTileByPosition(getX(), getY());
+        return currentTile != null && currentTile.getTileIndex() == tileIndex;
     }
 
     @Override
